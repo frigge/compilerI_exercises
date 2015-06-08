@@ -1,0 +1,59 @@
+%header {:
+ // this code is inlined before the generated parser
+package minijava;
+:};
+
+%terminals kw_class,  kw_public, kw_static, kw_void, kw_while, kw_if, kw_else, kw_extends, kw_return, kw_System_out_println, kw_this, kw_new, kw_main,
+                t_String, t_int, t_boolean,
+                sym_open, sym_open_square, sym_open_curly, sym_close, sym_close_square, sym_close_curly, sym_semicolon, sym_comma, sym_equals, sym_dot_len, sym_dot, 
+                sym_exclam, sym_logic_and, sym_plus, sym_minus, sym_mult, sym_less,
+                c_true, c_false,
+                integer_lit,
+                ident
+
+%typeof Goal = "Program";
+
+
+%goal Goal;
+
+// Productions with semantic actions building the JastAdd AST
+
+Goal = Program;
+
+Program = MainClass ClassDecl*;
+MainClass = kw_class id sym_open_curly kw_public kw_static kw_void kw_main sym_open t_String sym_open_square sym_close_square id sym_close sym_open_curly VarDecl* Statement* sym_close_curly sym_close_curly;
+ClassDecl = kw_class id sym_open_curly VarDecl* MethodDecl* sym_close_curly | kw_class id kw_extends id sym_open_curly VarDecl* MethodDecl* sym_close_curly;
+VarDecl = Type id sym_semicolon;
+MethdoDecl = kw_public Type id sym_open ?ParamList sym_close sym_open_curly VarDecl* Statement* kw_return Exp sym_semicolon sym_close_curly;
+ParamList = Type id ParamRest*;
+ParamRest = sym_comma, Type id;
+Type = t_int sym_open_square sym_close_square | t_boolean | t_int | id;
+Statement = sym_open_curly Statement* sym_close_curly 
+        | kw_if sym_open Exp sym_close Statement kw_else Statement
+        | kw_while sym_open Exp sym_close Statement
+        | kw_System_out_println sym_open Exp sym_close sym_semicolon
+        | id sym_equals Exp sym_semicolon
+        | id sym_open_square Exp sym_close_square sym_equals Exp sym_semicolon;
+
+Exp = Exp op Exp
+        | Exp sym_open_square Exp sym_close_square
+        | Exp kw_dot_length
+        | Exp sym_dot id sym_open ?ExpList sym_close
+        | c_true
+        | c_false
+        | id
+        | integer_lit
+        | kw_this
+        | kw_new t_int sym_open_square Exp sym_close_square
+        | kw_new id sym_open sym_close
+        | sym_exclam Exp
+        | sym_open Exp sym_close;
+        
+ExpList = Exp ExpRest*;
+ExpRest = sym_comma Exp;
+id = ident;
+op = sym_logic_and
+        | sym_plus
+        | sym_minus
+        | sym_mult
+        | sym_less;
