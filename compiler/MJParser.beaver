@@ -12,6 +12,19 @@ package minijava;
                 ident;
 
 %typeof Goal = "Program";
+%typeof Program = "Program";
+%typeof op = "Op";
+%typeof id = "Id";
+%typeof ExpRest = "ExpRest";
+%typeof ExpList = "ExpList";
+%typeof Exp = "Exp";
+%typeof Statement = "Statement";
+%typeof Type = "Type";
+%typeof ParamRest = "ParamList";
+%typeof MethodDecl = "MethodDecl";
+%typeof VarDecl = "VarDecl";
+%typeof ClassDecl = "ClassDecl";
+%typeof MainClass = "MainClass";
 
 
 %goal Goal;
@@ -24,7 +37,8 @@ Program = MainClass ClassDecl*;
 
 MainClass = kw_class id sym_open_curly kw_public kw_static kw_void kw_main sym_open t_String sym_open_square sym_close_square id sym_close sym_open_curly VarDecl* Statement* sym_close_curly sym_close_curly;
 
-ClassDecl = kw_class id sym_open_curly VarDecl* MethodDecl* sym_close_curly | kw_class id kw_extends id sym_open_curly VarDecl* MethodDecl* sym_close_curly;
+ClassDecl = kw_class id sym_open_curly VarDecl* MethodDecl* sym_close_curly 
+		| kw_class id kw_extends id sym_open_curly VarDecl* MethodDecl* sym_close_curly;
 
 VarDecl = Type id sym_semicolon;
 
@@ -34,10 +48,10 @@ ParamList = Type id ParamRest*;
 
 ParamRest = sym_comma Type id;
 
-Type = t_int sym_open_square sym_close_square 
-		| t_boolean 
-		| t_int 
-		| id;
+Type = t_int sym_open_square sym_close_square 											{: return new IntArrType(); :}
+		| t_boolean																		{: return new BooleanType(); :} 
+		| t_int 																		{: return new IntType(); :}
+		| id.i																			{: return new IdType(i); :};
 
 Statement = sym_open_curly Statement* sym_close_curly 
         | kw_if sym_open Exp sym_close Statement kw_else Statement
@@ -46,25 +60,25 @@ Statement = sym_open_curly Statement* sym_close_curly
         | id sym_equals Exp sym_semicolon
         | id sym_open_square Exp sym_close_square sym_equals Exp sym_semicolon;
 
-Exp = Exp op Exp
-        | Exp sym_open_square Exp sym_close_square
-        | Exp sym_dot_len
-        | Exp sym_dot id sym_open ?ExpList sym_close
-        | c_true
-        | c_false
-        | id
-        | integer_lit
-        | kw_this
-        | kw_new t_int sym_open_square Exp sym_close_square
-        | kw_new id sym_open sym_close
-        | sym_exclam Exp
-        | sym_open Exp sym_close;
+Exp = Exp.l op.o Exp.r																	{: return new BinOpExp(l,o,r); :}
+        | Exp.f sym_open_square Exp.p sym_close_square									{: return new ArrayExp(f,p); :}
+        | Exp.f sym_dot_len																{: return new LengthExp(f); :}
+        | Exp.f sym_dot id.m sym_open ?ExpList.p sym_close								{: return new MethodExp(f,m,p); :}
+        | c_true																		{: return new TrueExp(); :}
+        | c_false																		{: return new FalseExp(); :}
+        | id.i																			{: return new IdExp(i); :}
+        | integer_lit.i																	{: return new IntLit(i.value.toString()); :}
+        | kw_this																		{: return new ThisExp(); :}
+        | kw_new t_int sym_open_square Exp.g sym_close_square							{: return new IntArrExp(g); :}
+        | kw_new id.k sym_open sym_close												{: return new NewExp(k); :}
+        | sym_exclam Exp.e																{: return new NotExp(e); :}
+        | sym_open Exp.e sym_close														{: return new Geklammert(e); :};
         
 ExpList = Exp ExpRest*;
 
 ExpRest = sym_comma Exp;
 
-id = ident;
+id = ident.i																			{: return new Id(i.value.toString()); :};
 
 op = sym_logic_and																		{: return new And(); :}
         | sym_plus																		{: return new Plus(); :}
