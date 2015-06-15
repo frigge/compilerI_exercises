@@ -51,18 +51,18 @@ t_String = String
 t_int = int
 t_boolean = boolean
 
-sym_open = (
-sym_open_square = [
-sym_open_curly = {
-sym_close = )
-sym_close_square = ]
-sym_close_curly = }
+sym_open = \(
+sym_open_square = \[
+sym_open_curly = \{
+sym_close = \)
+sym_close_square = \]
+sym_close_curly = \}
 sym_semicolon = ;
 sym_comma = ,
 sym_equals = =
 sym_dot_len = \.length
 sym_dot = \.
-sym_exclam = !
+sym_exclam = \!
 sym_logic_and = &&
 sym_plus = \+
 sym_minus = -

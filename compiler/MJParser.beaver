@@ -9,7 +9,7 @@ package minijava;
                 sym_exclam, sym_logic_and, sym_plus, sym_minus, sym_mult, sym_less,
                 c_true, c_false,
                 integer_lit,
-                ident
+                ident;
 
 %typeof Goal = "Program";
 
@@ -21,13 +21,24 @@ package minijava;
 Goal = Program;
 
 Program = MainClass ClassDecl*;
+
 MainClass = kw_class id sym_open_curly kw_public kw_static kw_void kw_main sym_open t_String sym_open_square sym_close_square id sym_close sym_open_curly VarDecl* Statement* sym_close_curly sym_close_curly;
+
 ClassDecl = kw_class id sym_open_curly VarDecl* MethodDecl* sym_close_curly | kw_class id kw_extends id sym_open_curly VarDecl* MethodDecl* sym_close_curly;
+
 VarDecl = Type id sym_semicolon;
-MethdoDecl = kw_public Type id sym_open ?ParamList sym_close sym_open_curly VarDecl* Statement* kw_return Exp sym_semicolon sym_close_curly;
+
+MethodDecl = kw_public Type id sym_open ?ParamList sym_close sym_open_curly VarDecl* Statement* kw_return Exp sym_semicolon sym_close_curly;
+
 ParamList = Type id ParamRest*;
-ParamRest = sym_comma, Type id;
-Type = t_int sym_open_square sym_close_square | t_boolean | t_int | id;
+
+ParamRest = sym_comma Type id;
+
+Type = t_int sym_open_square sym_close_square 
+		| t_boolean 
+		| t_int 
+		| id;
+
 Statement = sym_open_curly Statement* sym_close_curly 
         | kw_if sym_open Exp sym_close Statement kw_else Statement
         | kw_while sym_open Exp sym_close Statement
@@ -37,7 +48,7 @@ Statement = sym_open_curly Statement* sym_close_curly
 
 Exp = Exp op Exp
         | Exp sym_open_square Exp sym_close_square
-        | Exp kw_dot_length
+        | Exp sym_dot_len
         | Exp sym_dot id sym_open ?ExpList sym_close
         | c_true
         | c_false
@@ -50,10 +61,13 @@ Exp = Exp op Exp
         | sym_open Exp sym_close;
         
 ExpList = Exp ExpRest*;
+
 ExpRest = sym_comma Exp;
+
 id = ident;
-op = sym_logic_and
-        | sym_plus
-        | sym_minus
-        | sym_mult
-        | sym_less;
+
+op = sym_logic_and																		{: return new And(); :}
+        | sym_plus																		{: return new Plus(); :}
+        | sym_minus																		{: return new Minus(); :}
+        | sym_mult																		{: return new Mul(); :}
+        | sym_less																		{: return new Less(); :};
