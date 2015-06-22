@@ -1,18 +1,43 @@
-Program            ::=  ..;
-MainClass ::= 
-ClassDecl ::= 
-VarDecl ::= 
-MethodDecl ::= 
-ParamList ::= 
-ParamRest ::= 
-Type ::= 
-Statement ::= 
-Exp ::= 
-ExpList ::= 
-ExpRest ::= 
-Id ::= 
+Program;
+MainClass;
+ClassDecl; 
+VarDecl; 
+MethodDecl;
+ParamList;
+ParamRest; 
+
+abstract Type;
+IntArrType	:Type;
+BooleanType	:Type;
+IntType		:Type;
+IdType		:Type	::= Ident:Id;
+
+Statement;
+
+abstract Exp;
+BinOpExp 	:Exp 	::= L:Exp O:Op R:Exp;
+ArrayExp 	:Exp 	::= Feld:Exp Position:Exp;
+LengthExp 	:Exp	::= Feld:Exp;
+MethodExp	:Exp	::= Feld:Exp Method:Id Parameter:ExpList;
+TrueExp		:Exp;
+FalseExp	:Exp;
+IdExp		:Exp	::= Name:Id;
+IntLit		:Exp	::= <Wert>;
+ThisExp		:Exp;
+IntArrExp	:Exp	::= Groesse:Exp;
+NewExp		:Exp	::= Klasse:Id;
+NotExp		:Exp	::= Wert:Exp;
+Geklammert	:Exp	::= Expression:Exp;
+
+ExpList;
+ExpRest; 
+
+Id ::= <ident>; 
+
+
 abstract Op;
-Plus :Op ::= 
-Minus :Op ::= 
-Mul :Op ::= 
-Less :Op ::= 
+And :Op;
+Plus :Op;
+Minus :Op; 
+Mul :Op;
+Less :Op;
