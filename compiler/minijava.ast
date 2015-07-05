@@ -1,10 +1,10 @@
 Program             ::= Main:MainClass Decls:ClassDecl*;
-MainClass           ::= Ident:Id;
+MainClass           ::= Ident:Id ParamName:Id Variables:VarDecl* Statements:Statement*;
 
 abstract Decl;
-ClassDecl   :Decl   ::= Ident:Id [Extends:Id] VarDecl* MethodDecl*;
+ClassDecl   :Decl   ::= Ident:Id [Extends:Id] Variables:VarDecl* Methods:MethodDecl*;
 VarDecl     :Decl   ::= T:Type Ident:Id;
-MethodDecl  :Decl   ::= T:Type Ident:Id Params:Param* VarDecl* Statement* ReturnExp:Exp;
+MethodDecl  :Decl   ::= T:Type Ident:Id Params:Param* Vars:VarDecl* Statements:Statement* ReturnExp:Exp;
 
 Param               ::= T:Type Ident:Id;
 
@@ -15,7 +15,7 @@ IntType		:Type;
 IdType		:Type	::= Ident:Id;
 
 abstract Statement;
-StmList     :Statement ::= Statement*;
+StmList     :Statement ::= Statements:Statement*;
 IfThenElse  :Statement ::= If:Exp Then:Statement Else:Statement;
 While       :Statement ::= Bedingung:Exp Statement;
 Syso        :Statement ::= Exp;
@@ -37,7 +37,7 @@ NewExp		:Exp	::= Klasse:Id;
 NotExp		:Exp	::= Wert:Exp;
 Geklammert	:Exp	::= Expression:Exp;
 
-Id ::= <ident>; 
+Id ::= <Ident>; 
 
 abstract Op;
 And :Op;
