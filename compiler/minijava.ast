@@ -1,18 +1,47 @@
-Program            ::=  ..;
-MainClass ::= 
-ClassDecl ::= 
-VarDecl ::= 
-MethodDecl ::= 
-ParamList ::= 
-ParamRest ::= 
-Type ::= 
-Statement ::= 
-Exp ::= 
-ExpList ::= 
-ExpRest ::= 
-Id ::= 
+Program             ::= Main:MainClass Decls:ClassDecl*;
+MainClass           ::= Ident:Id;
+
+abstract Decl;
+ClassDecl   :Decl   ::= Ident:Id [Extends:Id] VarDecl* MethodDecl*;
+VarDecl     :Decl   ::= T:Type Ident:Id;
+MethodDecl  :Decl   ::= T:Type Ident:Id Params:Param* VarDecl* Statement* ReturnExp:Exp;
+
+Param               ::= T:Type Ident:Id;
+
+abstract Type;
+IntArrType	:Type;
+BooleanType	:Type;
+IntType		:Type;
+IdType		:Type	::= Ident:Id;
+
+abstract Statement;
+StmList     :Statement ::= Statement*;
+IfThenElse  :Statement ::= If:Exp Then:Statement Else:Statement;
+While       :Statement ::= Bedingung:Exp Statement;
+Syso        :Statement ::= Exp;
+Zuweisung   :Statement ::= Ident:Id Exp;
+ArrZuw      :Statement ::= Ident:Id Pos:Exp Value:Exp;
+
+abstract Exp;
+BinOpExp 	:Exp 	::= L:Exp O:Op R:Exp;
+ArrayExp 	:Exp 	::= Feld:Exp Position:Exp;
+LengthExp 	:Exp	::= Feld:Exp;
+MethodExp	:Exp	::= Feld:Exp Method:Id Parameter:Exp*;
+TrueExp		:Exp;
+FalseExp	:Exp;
+IdExp		:Exp	::= Name:Id;
+IntLit		:Exp	::= <Wert>;
+ThisExp		:Exp;
+IntArrExp	:Exp	::= Groesse:Exp;
+NewExp		:Exp	::= Klasse:Id;
+NotExp		:Exp	::= Wert:Exp;
+Geklammert	:Exp	::= Expression:Exp;
+
+Id ::= <ident>; 
+
 abstract Op;
-Plus :Op ::= 
-Minus :Op ::= 
-Mul :Op ::= 
-Less :Op ::= 
+And :Op;
+Plus :Op;
+Minus :Op; 
+Mul :Op;
+Less :Op;
