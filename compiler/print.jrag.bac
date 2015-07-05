@@ -1,4 +1,4 @@
-// Sie müssen ggf. diese Datei an ihre minijava.ast anpassen
+// Sie mï¿½ssen ggf. diese Datei an ihre minijava.ast anpassen
 
 aspect PrettyPrint {
   public class PrettyPrinter {
@@ -37,7 +37,7 @@ aspect PrettyPrint {
   eq MainClass.addsIndentationLevel() = true;
   eq ClassDecl.addsIndentationLevel() = true;
   eq MethodDecl.addsIndentationLevel() = true;
-  eq Stmt.addsIndentationLevel() = true;
+  eq Statement.addsIndentationLevel() = true;
   eq Block.addsIndentationLevel() = true;
 
   syn lazy PrettyPrinter Program.printer() {
@@ -48,7 +48,7 @@ aspect PrettyPrint {
   
   inh lazy PrettyPrinter Decl.printer();
   inh lazy PrettyPrinter TypeUse.printer();
-  inh lazy PrettyPrinter Stmt.printer();
+  inh lazy PrettyPrinter Statement.printer();
   inh lazy PrettyPrinter Exp.printer();
   
   syn PrettyPrinter Program.print() {
@@ -65,7 +65,7 @@ aspect PrettyPrint {
       v.print();
       printer().append(";\n");
     }
-	for (Stmt s : getStmtss()) s.print();
+	for (Statement s : getStmtss()) s.print();
   	printer().append(indent() + "}");
   	printer().append("\n}\n");
   }
@@ -100,7 +100,7 @@ aspect PrettyPrint {
       v.print();
       printer().append(";\n");
     }
-    for (Stmt s : getStmtss()) s.print();
+    for (Statement s : getStmtss()) s.print();
 	printer().append(indent() + PrettyPrinter.INDENT + "return ");
 	getRetExp().print();
 	printer().append(";");
@@ -126,10 +126,10 @@ aspect PrettyPrint {
     printer().append(getName());
   }
   
-  public abstract void Stmt.print();
+  public abstract void Statement.print();
   public void Block.print() {
     printer().append(indent() + "{");
-    for (Stmt s : getStmtss()) s.print();
+    for (Statement s : getStmtss()) s.print();
     printer().append(indent() + "}");
   }
   public void Assign.print() {

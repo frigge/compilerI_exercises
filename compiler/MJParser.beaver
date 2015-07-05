@@ -16,14 +16,18 @@ package minijava;
 %typeof op = "Op";
 %typeof id = "Id";
 %typeof ExpRest = "ExpRest";
-%typeof ExpList = "ExpList";
+%typeof ExpList = "List";
 %typeof Exp = "Exp";
+%typeof StatementList = "List<Statement>";
 %typeof Statement = "Statement";
 %typeof Type = "Type";
 %typeof ParamRest = "ParamList";
+%typeof MethodDeclList = "List<MethodDecl>";
 %typeof MethodDecl = "MethodDecl";
+%typeof VarDeclList = "List<VarDecl>";
 %typeof VarDecl = "VarDecl";
 %typeof ClassDecl = "ClassDecl";
+%typeof ClassDeclList = "List<ClassDecl>";
 %typeof MainClass = "MainClass";
 
 
@@ -33,15 +37,22 @@ package minijava;
 
 Goal = Program;
 
-Program = MainClass ClassDecl*;
+Program = MainClass.m ClassDeclList.cls                                                 {: return new Program(m, cls); :};
 
 MainClass = kw_class id sym_open_curly kw_public kw_static kw_void kw_main sym_open t_String sym_open_square sym_close_square id sym_close sym_open_curly VarDecl* Statement* sym_close_curly sym_close_curly;
 
-ClassDecl = kw_class id sym_open_curly VarDecl* MethodDecl* sym_close_curly 
-		| kw_class id kw_extends id sym_open_curly VarDecl* MethodDecl* sym_close_curly;
+ClassDeclList = ClassDecl.c ClassDeclList.l                                             {: l.add(c); return l; :}
+        |                                                                               {: return new List<ClassDecl>(); :};
 
+ClassDecl = kw_class id.i sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly                 {: return new ClassDecl(i, new Opt<Id>(), vdl, mdl); :}
+		| kw_class id.i kw_extends id.e sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly   {: return new ClassDecl(i, new Opt<Id>(e), vdl, mdl); :};
+
+VarDeclList = VarDecl.v VarDeclList.l                                                   {: l.add(v); return l; :}
+        |                                                                               {: return new List<VarDecl>(); :};
 VarDecl = Type id sym_semicolon;
 
+MethodDeclList = MethodDecl.m MethodDeclList.l                                          {: l.add(m); return m; :}
+        |                                                                               {: return new List<MethodDecl>(); :};
 MethodDecl = kw_public Type id sym_open ?ParamList sym_close sym_open_curly VarDecl* Statement* kw_return Exp sym_semicolon sym_close_curly;
 
 ParamList = Type id ParamRest*;
@@ -53,7 +64,9 @@ Type = t_int sym_open_square sym_close_square 											{: return new IntArrTyp
 		| t_int 																		{: return new IntType(); :}
 		| id.i																			{: return new IdType(i); :};
 
-Statement = sym_open_curly Statement* sym_close_curly 
+StatementList = StatementList.l Statement.s                                             {: l.add(s); return(l); :}
+        |                                                                               {: return new List<Statement>(); :};
+Statement = sym_open_curly StatementList sym_close_curly 
         | kw_if sym_open Exp sym_close Statement kw_else Statement
         | kw_while sym_open Exp sym_close Statement
         | kw_System_out_println sym_open Exp sym_close sym_semicolon
