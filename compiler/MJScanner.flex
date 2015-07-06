@@ -30,7 +30,6 @@ import minijava.MJParser.Terminals;
 %}
 
 LineTerminator = \r|\n|\r\n
-InputCharacter = [^\r\n]
 WhiteSpace     = {LineTerminator} | [ \t\f]
 
 kw_class = class
@@ -72,7 +71,7 @@ sym_less = <
 c_true  = true 
 c_false = false
 integer_lit = \d+
-ident = \w(\d|\w|_)*
+ident = [a-zA-Z](\d|\w)*
 %%
 
 {WhiteSpace}  { }

@@ -11,41 +11,40 @@ package minijava;
                 integer_lit,
                 ident;
 
-%typeof Goal = "Program";
-%typeof Program = "Program";
-%typeof op = "Op";
-%typeof id = "Id";
-%typeof ExpRest = "ExpRest";
-%typeof ExpList = "List";
-%typeof Exp = "Exp";
-%typeof StatementList = "List<Statement>";
-%typeof Statement = "Statement";
-%typeof Type = "Type";
-%typeof ParamRest = "ParamList";
-%typeof MethodDeclList = "List<MethodDecl>";
-%typeof MethodDecl = "MethodDecl";
-%typeof VarDeclList = "List<VarDecl>";
-%typeof VarDecl = "VarDecl";
-%typeof ClassDecl = "ClassDecl";
-%typeof ClassDeclList = "List<ClassDecl>";
-%typeof MainClass = "MainClass";
+%typeof Program 		= "Program";
+%typeof op 				= "Op";
+%typeof id 				= "Id";
+%typeof ExpRest 		= "ExpRest";
+%typeof ExpList 		= "List";
+%typeof Exp 			= "Exp";
+%typeof StatementList 	= "List<Statement>";
+%typeof Statement 		= "Statement";
+%typeof Type 			= "Type";
+%typeof ParamList 		= "List<Param>";
+%typeof ParamRestList 	= "List<Param>";
+%typeof ParamRest 		= "Param";
+%typeof MethodDeclList 	= "List<MethodDecl>";
+%typeof MethodDecl 		= "MethodDecl";
+%typeof VarDeclList 	= "List<VarDecl>";
+%typeof VarDecl 		= "VarDecl";
+%typeof ClassDecl 		= "ClassDecl";
+%typeof ClassDeclList 	= "List<ClassDecl>";
+%typeof MainClass 		= "MainClass";
 
-
-%goal Goal;
+%goal Program;
 
 // Productions with semantic actions building the JastAdd AST
 
-Goal = Program;
-
 Program = MainClass.m ClassDeclList.cls                                                 {: return new Program(m, cls); :};
 
-MainClass = kw_class id sym_open_curly kw_public kw_static kw_void kw_main sym_open t_String sym_open_square sym_close_square id sym_close sym_open_curly VarDecl* Statement* sym_close_curly sym_close_curly;
+MainClass = kw_class id.cName sym_open_curly kw_public kw_static kw_void kw_main sym_open t_String sym_open_square sym_close_square id.params sym_close sym_open_curly VarDeclList.vars StatementList.statements sym_close_curly sym_close_curly
+																						{: return new MainClass(cName, params, vars, statements); :};
 
 ClassDeclList = ClassDecl.c ClassDeclList.l                                             {: l.add(c); return l; :}
         |                                                                               {: return new List<ClassDecl>(); :};
 
-ClassDecl = kw_class id.i sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly                 {: return new ClassDecl(i, new Opt<Id>(), vdl, mdl); :}
-		| kw_class id.i kw_extends id.e sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly   {: return new ClassDecl(i, new Opt<Id>(e), vdl, mdl); :};
+ClassDecl = kw_class id.i sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly                 {: return new ClassDecl(i, null, vdl, mdl); :}
+		| kw_class id.i kw_extends id.e sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly   {: return new ClassDecl(i, e, vdl, mdl); :};
 
 VarDeclList = VarDecl.v VarDeclList.l                                                   {: l.add(v); return l; :}
         |                                                                               {: return new List<VarDecl>(); :};
@@ -53,11 +52,15 @@ VarDecl = Type id sym_semicolon;
 
 MethodDeclList = MethodDecl.m MethodDeclList.l                                          {: l.add(m); return m; :}
         |                                                                               {: return new List<MethodDecl>(); :};
-MethodDecl = kw_public Type id sym_open ?ParamList sym_close sym_open_curly VarDecl* Statement* kw_return Exp sym_semicolon sym_close_curly;
+MethodDecl = kw_public Type.returnType id.methodName sym_open ParamList.params sym_close sym_open_curly VarDeclList.vars StatementList.statements kw_return Exp.ret sym_semicolon sym_close_curly
+																						{: return new MethodDecl(returnType, methodName, params, vars, statements, ret); :}
+		| kw_public Type.returnType id.methodName sym_open sym_close sym_open_curly VarDeclList.vars StatementList.statements kw_return Exp.ret sym_semicolon sym_close_curly
+																						{: return new MethodDecl(returnType, methodName, new List<Param>(), vars, statements, ret); :};
 
-ParamList = Type id ParamRest*;
-
-ParamRest = sym_comma Type id;
+ParamList = Type.t id.i ParamRestList.l													{: Param p = new Param(t,i); l.add(p); return l; :};
+ParamRestList = ParamRest.p ParamRestList.l												{: l.add(p); return l; :}
+		|																				{: return new List<Param>(); :};
+ParamRest = sym_comma Type.t id.i														{: return new Param(t,i); :};
 
 Type = t_int sym_open_square sym_close_square 											{: return new IntArrType(); :}
 		| t_boolean																		{: return new BooleanType(); :} 
@@ -66,17 +69,19 @@ Type = t_int sym_open_square sym_close_square 											{: return new IntArrTyp
 
 StatementList = StatementList.l Statement.s                                             {: l.add(s); return(l); :}
         |                                                                               {: return new List<Statement>(); :};
-Statement = sym_open_curly StatementList sym_close_curly 
-        | kw_if sym_open Exp sym_close Statement kw_else Statement
-        | kw_while sym_open Exp sym_close Statement
-        | kw_System_out_println sym_open Exp sym_close sym_semicolon
-        | id sym_equals Exp sym_semicolon
-        | id sym_open_square Exp sym_close_square sym_equals Exp sym_semicolon;
+Statement = sym_open_curly StatementList.l sym_close_curly 								{: return new StmList(l); :}
+        | kw_if sym_open Exp.i sym_close Statement.t kw_else Statement.e				{: return new IfThenElse(i,t,e); :}
+        | kw_while sym_open Exp.b sym_close Statement.s									{: return new While(b,s); :}
+        | kw_System_out_println sym_open Exp.e sym_close sym_semicolon					{: return new Syso(e); :}
+        | id.feld sym_equals Exp.value sym_semicolon									{: return new Zuweisung(feld,value); :}
+        | id.feld sym_open_square Exp.pos sym_close_square sym_equals Exp.value sym_semicolon
+        																				{:return new ArrZuw(feld,pos,value); :};
 
 Exp = Exp.l op.o Exp.r																	{: return new BinOpExp(l,o,r); :}
         | Exp.f sym_open_square Exp.p sym_close_square									{: return new ArrayExp(f,p); :}
         | Exp.f sym_dot_len																{: return new LengthExp(f); :}
-        | Exp.f sym_dot id.m sym_open ?ExpList.p sym_close								{: return new MethodExp(f,m,p); :}
+        | Exp.f sym_dot id.m sym_open ExpList.p sym_close								{: return new MethodExp(f,m,p); :}
+        | Exp.f sym_dot id.m sym_open sym_close											{: return new MethodExp(f,m, new List<Exp>()); :}
         | c_true																		{: return new TrueExp(); :}
         | c_false																		{: return new FalseExp(); :}
         | id.i																			{: return new IdExp(i); :}

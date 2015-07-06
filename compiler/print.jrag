@@ -38,7 +38,7 @@ aspect PrettyPrint {
   eq ClassDecl.addsIndentationLevel() = true;
   eq MethodDecl.addsIndentationLevel() = true;
   eq Statement.addsIndentationLevel() = true;
-  eq Block.addsIndentationLevel() = true;
+  eq StmList.addsIndentationLevel() = true;
 
   syn lazy PrettyPrinter Program.printer() {
   	return new PrettyPrinter();
@@ -47,9 +47,14 @@ aspect PrettyPrint {
   eq Program.getDecls().printer() = this.printer();
   
   inh lazy PrettyPrinter Decl.printer();
-  inh lazy PrettyPrinter TypeUse.printer();
+  inh lazy PrettyPrinter IdType.printer();
+  inh lazy PrettyPrinter MainClass.printer();
   inh lazy PrettyPrinter Statement.printer();
+  inh lazy PrettyPrinter Param.printer();
   inh lazy PrettyPrinter Exp.printer();
+  inh lazy PrettyPrinter Type.printer();
+  inh lazy PrettyPrinter Op.printer();
+  inh lazy PrettyPrinter Id.printer();
   
   syn PrettyPrinter Program.print() {
     getMain().print();
@@ -59,21 +64,25 @@ aspect PrettyPrint {
   
   public void MainClass.print() {
     printer().append("class " + getIdent() + " {");
-  	printer().append(indent() + "public static void main (String[] " + getMainArgs() + ") {");
-	for (TypedVar v : getLocalVarss()) {
+  	printer().append(indent() + "public static void main (String[] " + getParamName() + ") {");
+	for (VarDecl v : getVariabless()) {
 	  printer().append(indent() + PrettyPrinter.INDENT);  
       v.print();
       printer().append(";\n");
     }
-	for (Statement s : getStmtss()) s.print();
+	for (Statement s : getStatementss()) s.print();
   	printer().append(indent() + "}");
   	printer().append("\n}\n");
   }
   
   public void ClassDecl.print() {
-  //TODO extends!
-    printer().append("class " + getIdent() + " {");
-    	for (TypedVar f : getFieldss()) {
+    printer().append("class " + getIdent());
+    if(getExtends() != null){
+    	printer().append(" extends ");
+    	getExtends().print();
+    }    	
+	printer().append(" {");
+   	for (VarDecl f : getVariabless()) {
 	  printer().append(indent() + PrettyPrinter.INDENT);  
       f.print();
       printer().append(";\n");
@@ -84,180 +93,181 @@ aspect PrettyPrint {
 
   public void MethodDecl.print() {
   	printer().append(indent() + "public ");
-  	getRetType().print();
+  	getT().print();
   	printer().append(" " + getIdent());
   	printer().append("(");
-  	if (getNumFormalParams() > 0) {
-  	  getFormalParams(0).print();
-  	  for (int i = 1; i < getNumFormalParams(); i++) {
+  	if (getNumParams() > 0) {
+  	  getParams(0).print();
+  	  for (int i = 1; i < getNumParams(); i++) {
   	    printer().append(", ");
-  	    getFormalParams(i).print();
+  	    getParams(i).print();
   	  }
   	} 
   	printer().append(") {");
-  		for (TypedVar v : getLocalVarss()) {
+  		for (VarDecl v : getVarss()) {
 	  printer().append(indent() + PrettyPrinter.INDENT);  
       v.print();
       printer().append(";\n");
     }
-    for (Statement s : getStmtss()) s.print();
+    for (Statement s : getStatementss()) s.print();
 	printer().append(indent() + PrettyPrinter.INDENT + "return ");
-	getRetExp().print();
+	getReturnExp().print();
 	printer().append(";");
   	printer().append(indent() + "}\n");
   }
 
-  public void TypedVar.print() {
-	getType().print();
+  public void VarDecl.print() {
+	getT().print();
   	printer().append(" " + getIdent());
   }
   
-  public abstract void TypeUse.print();
-  public void IntArray.print() {
+  public void Param.print(){
+  	getT().print();
+  	printer().append(" ");
+  	getIdent().print();
+  }
+  
+  public abstract void Type.print();
+  public void IntArrType.print() {
     printer().append("int[]");
   }
-  public void Bool.print() {
+  public void BooleanType.print() {
     printer().append("boolean");
   }
-  public void Int.print() {
+  public void IntType.print() {
     printer().append("int");
   }
-  public void ClassT.print() {
-    printer().append(getName());
+  public void IdType.print() {
+    getIdent().print();
   }
   
   public abstract void Statement.print();
-  public void Block.print() {
+  public void StmList.print() {
     printer().append(indent() + "{");
-    for (Statement s : getStmtss()) s.print();
+    for (Statement s : getStatementss()) s.print();
     printer().append(indent() + "}");
   }
-  public void Assign.print() {
+  public void Zuweisung.print() {
     printer().append(indent());
-    getName().print();
+    getIdent().print();
     printer().append(" = ");
-    getRhs().print();
-    printer().append(";");
-  }
-  public void ArrayAssign.print() {
-    printer().append(indent());
-    getName().print();
-    printer().append("[");
-    getOffset().print();
-    printer().append("] = "); 
     getExp().print();
     printer().append(";");
   }
-  public void If.print() {
+  public void ArrZuw.print() {
+    printer().append(indent());
+    getIdent().print();
+    printer().append("[");
+    getPos().print();
+    printer().append("] = "); 
+    getValue().print();
+    printer().append(";");
+  }
+  public void IfThenElse.print() {
     printer().append(indent() + "if (");
-    getCond().print();
+    getIf().print();
     printer().append(")");
-    getTStmt().print();
+    getThen().print();
     printer().append(indent() + "else ");
-    getFStmt().print();
+    getElse().print();
   }
   public void While.print() {
     printer().append(indent() + " while (");
-    getCond().print();
+    getBedingung().print();
     printer().append(")");
-    getBody().print();
+    getStatement().print();
   }
-  public void Print.print() {
+  public void Syso.print() {
     printer().append(indent() + "System.out.println(");
     getExp().print();
     printer().append(");");
   }
 
   abstract void Exp.print();
-  public void And.print() {
-    printer().append("(");
-    getLeft().print();
-    printer().append(" && ");
-    getRight().print();
+  public void BinOpExp.print(){
+  	printer().append("(");
+    getL().print();
+    printer().append(" ");
+    getO().print();
+    printer().append(" ");
+    getR().print();
     printer().append(")");
   }
-    public void Cmp.print() {
-    printer().append("(");
-    getLeft().print();
-    printer().append(" < ");
-    getRight().print();
-    printer().append(")");
-  }
-    public void Add.print() {
-    printer().append("(");
-    getLeft().print();
-    printer().append(" + ");
-    getRight().print();
-    printer().append(")");
-  }
-  public void Sub.print() {
-    printer().append("(");
-    getLeft().print();
-    printer().append(" - ");
-    getRight().print();
-    printer().append(")");
-  }
-  public void Mult.print() {
-    printer().append("(");
-    getLeft().print();
-    printer().append(" * ");
-    getRight().print();
-    printer().append(")");
-  }
-  public void Not.print() {
+  public void NotExp.print() {
     printer().append("!(");
-    getExp().print();
+    getWert().print();
     printer().append(")");
   }
-  public void Neg.print() {
-    printer().append("-(");
-    getExp().print();
+  public void Geklammert.print() {
+    printer().append("(");
+    getExpression().print();
     printer().append(")");
   }
-  public void IdentUse.print() {
-    printer().append(getName());
+  public void IdExp.print() {
+    getName().print();
   }  
-  public void ArrayAlloc.print() {
+  public void IntArrExp.print() {
     printer().append("new int[");
-    getSize().print();
+    getGroesse().print();
     printer().append("]");
   }  
-  public void ObjAlloc.print() {
-    printer().append("new " + getName() + "()");
+  public void NewExp.print() {
+    printer().append("new " + getKlasse() + "()");
   }  
-  public void ArrayLookup.print() {
-    getExp().print();
+  public void ArrayExp.print() {
+    getFeld().print();
     printer().append("[");
-    getOffset().print();
+    getPosition().print();
     printer().append("]");
   }  
-  public void ArrayLength.print() {
-    getExp().print();
+  public void LengthExp.print() {
+    getFeld().print();
     printer().append(".length");
   }  
-  public void MethodCall.print() {
-    getObj().print();
-    printer().append("." + getName() + "(");
-    if (getNumArgs() > 0) {
-  	  getArgs(0).print();
-  	  for (int i = 1; i < getNumArgs(); i++) {
+  public void MethodExp.print() {
+    getFeld().print();
+    printer().append("." + getMethod() + "(");
+    if (getNumParameter() > 0) {
+  	  getParameter(0).print();
+  	  for (int i = 1; i < getNumParameter(); i++) {
   	    printer().append(", ");
-  	    getArgs(i).print();
+  	    getParameter(i).print();
   	  }
   	} 
     printer().append(")");
   }  
-  public void IntLiteral.print() {
-  	printer().append(getInteger().toString());
+  public void IntLit.print() {
+  	printer().append(getWert().toString());
   } 
-  public void True.print() {
+  public void TrueExp.print() {
   	printer().append("true");
   }
-  public void False.print() {
+  public void FalseExp.print() {
   	printer().append("false");
   }
-  public void This.print() {
+  public void ThisExp.print() {
   	printer().append("this");
+  }
+  
+  public void Id.print(){
+  	printer().append(getIdent());
+  }
+  
+  abstract void Op.print();
+  public void And.print(){
+  	printer().append("&&");
+  }
+  public void Plus.print(){
+  	printer().append("+");
+  }
+  public void Minus.print(){
+  	printer().append("-");
+  } 
+  public void Mul.print(){
+  	printer().append("*");
+  }
+  public void Less.print(){
+  	printer().append("<");
   }
   
 }
