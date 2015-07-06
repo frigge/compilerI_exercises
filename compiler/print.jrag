@@ -76,8 +76,12 @@ aspect PrettyPrint {
   }
   
   public void ClassDecl.print() {
-  //TODO extends!
-    printer().append("class " + getIdent() + " {");
+    printer().append("class " + getIdent());
+    if(getExtends() != null){
+    	printer().append(" extends ");
+    	getExtends().print();
+    }    	
+	printer().append(" {");
    	for (VarDecl f : getVariabless()) {
 	  printer().append(indent() + PrettyPrinter.INDENT);  
       f.print();
