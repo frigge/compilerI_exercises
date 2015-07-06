@@ -29,7 +29,7 @@
     <jastadd package="${package}" grammar="${grammar.dir}" outdir="${gen.dir}" beaver="true" debug="true">
         <fileset dir=".">
           <include name="${grammar.dir}/*.ast"/>
-          <include name="${grammar.dir}/*.jrag"/>
+		  <include name="${grammar.dir}/*.jrag"/>     
           <include name="${grammar.dir}/*.jadd"/>
         </fileset>
       </jastadd>
