@@ -30,6 +30,7 @@ import minijava.MJParser.Terminals;
 %}
 
 LineTerminator = \r|\n|\r\n
+InputCharacter = [^\r\n]
 WhiteSpace     = {LineTerminator} | [ \t\f]
 
 kw_class = class
@@ -72,8 +73,12 @@ c_true  = true
 c_false = false
 integer_lit = [0-9]+
 ident = [a-zA-Z][a-zA-Z0-9_]*
+TraditionalComment   = "/*" [^*] ~"*/" | "/*" "*"+ "/"
+EndOfLineComment     = "//" {InputCharacter}* {LineTerminator}?
 %%
 
+{TraditionalComment} { }
+{EndOfLineComment} { }
 {WhiteSpace}  { }
 {sym_open} { return sym(Terminals.sym_open); }
 {sym_open_square} { return sym(Terminals.sym_open_square); }

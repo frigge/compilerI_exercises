@@ -35,6 +35,11 @@ class MainTest{
 }
 
 class Empty{
+	//This is a test 
+	/*This is not a trick attack*/
+	/*Multi-
+	 Line
+	 */
 }
 
 class NotMainTestWithVarsButNoMethods{
