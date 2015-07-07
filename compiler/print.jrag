@@ -63,8 +63,12 @@ aspect PrettyPrint {
   }
   
   public void MainClass.print() {
-    printer().append("class " + getIdent() + " {");
-  	printer().append(indent() + "public static void main (String[] " + getParamName() + ") {");
+    printer().append("class ");
+    getIdent().print();
+    printer().append(" {");
+  	printer().append(indent() + "public static void main (String[] ");
+  	getParamName().print();
+  	printer().append(") {");
 	for (VarDecl v : getVariabless()) {
 	  printer().append(indent() + PrettyPrinter.INDENT);  
       v.print();
@@ -76,7 +80,8 @@ aspect PrettyPrint {
   }
   
   public void ClassDecl.print() {
-    printer().append("class " + getIdent());
+    printer().append("class ");
+    getIdent().print();
     if(getExtends() != null){
     	printer().append(" extends ");
     	getExtends().print();
@@ -94,7 +99,8 @@ aspect PrettyPrint {
   public void MethodDecl.print() {
   	printer().append(indent() + "public ");
   	getT().print();
-  	printer().append(" " + getIdent());
+  	printer().append(" ");
+  	getIdent().print();
   	printer().append("(");
   	if (getNumParams() > 0) {
   	  getParams(0).print();
@@ -118,7 +124,8 @@ aspect PrettyPrint {
 
   public void VarDecl.print() {
 	getT().print();
-  	printer().append(" " + getIdent());
+  	printer().append(" ");
+  	getIdent().print();
   }
   
   public void Param.print(){
@@ -226,7 +233,9 @@ aspect PrettyPrint {
   }  
   public void MethodExp.print() {
     getFeld().print();
-    printer().append("." + getMethod() + "(");
+    printer().append(".");
+    getMethod().print();
+    printer().append("(");
     if (getNumParameter() > 0) {
   	  getParameter(0).print();
   	  for (int i = 1; i < getNumParameter(); i++) {
