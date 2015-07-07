@@ -14,8 +14,9 @@ package minijava;
 %typeof Program 		= "Program";
 %typeof op 				= "Op";
 %typeof id 				= "Id";
-%typeof ExpRest 		= "ExpRest";
-%typeof ExpList 		= "List";
+%typeof ExpRest 		= "Exp";
+%typeof ExpRestList		= "List<Exp>";
+%typeof ExpList			= "List<Exp>";
 %typeof Exp 			= "Exp";
 %typeof StatementList 	= "List<Statement>";
 %typeof Statement 		= "Statement";
@@ -43,14 +44,14 @@ MainClass = kw_class id.cName sym_open_curly kw_public kw_static kw_void kw_main
 ClassDeclList = ClassDecl.c ClassDeclList.l                                             {: l.add(c); return l; :}
         |                                                                               {: return new List<ClassDecl>(); :};
 
-ClassDecl = kw_class id.i sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly                 {: return new ClassDecl(i, null, vdl, mdl); :}
-		| kw_class id.i kw_extends id.e sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly   {: return new ClassDecl(i, e, vdl, mdl); :};
+ClassDecl = kw_class id.i sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly                 {: return new ClassDecl(i, new Opt<Id>(), vdl, mdl); :}
+		| kw_class id.i kw_extends id.e sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly   {: return new ClassDecl(i, new Opt<Id>(e), vdl, mdl); :};
 
 VarDeclList = VarDecl.v VarDeclList.l                                                   {: l.add(v); return l; :}
         |                                                                               {: return new List<VarDecl>(); :};
-VarDecl = Type id sym_semicolon;
+VarDecl = Type.t id.i sym_semicolon														{: return new VarDecl(t,i); :};
 
-MethodDeclList = MethodDecl.m MethodDeclList.l                                          {: l.add(m); return m; :}
+MethodDeclList = MethodDecl.m MethodDeclList.l                                          {: l.add(m); return l; :}
         |                                                                               {: return new List<MethodDecl>(); :};
 MethodDecl = kw_public Type.returnType id.methodName sym_open ParamList.params sym_close sym_open_curly VarDeclList.vars StatementList.statements kw_return Exp.ret sym_semicolon sym_close_curly
 																						{: return new MethodDecl(returnType, methodName, params, vars, statements, ret); :}
@@ -92,9 +93,10 @@ Exp = Exp.l op.o Exp.r																	{: return new BinOpExp(l,o,r); :}
         | sym_exclam Exp.e																{: return new NotExp(e); :}
         | sym_open Exp.e sym_close														{: return new Geklammert(e); :};
         
-ExpList = Exp ExpRest*;
-
-ExpRest = sym_comma Exp;
+ExpList = Exp.e ExpRestList.l															{: List<Exp> l2 = new List<Exp>(); l2.add(e); for(Exp v: l){l2.add(v);}; return l2; :};
+ExpRestList = ExpRestList.l ExpRest.r													{: l.add(r); return l; :}
+		|																				{: return new List<Exp>(); :};
+ExpRest = sym_comma Exp.e																{: return e; :};
 
 id = ident.i																			{: return new Id(i.value.toString()); :};
 

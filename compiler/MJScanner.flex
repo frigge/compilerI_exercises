@@ -70,8 +70,8 @@ sym_less = <
 
 c_true  = true 
 c_false = false
-integer_lit = \d+
-ident = [a-zA-Z](\d|\w)*
+integer_lit = [0-9]+
+ident = [a-zA-Z][a-zA-Z0-9_]*
 %%
 
 {WhiteSpace}  { }
