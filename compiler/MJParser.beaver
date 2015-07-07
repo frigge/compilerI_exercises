@@ -44,14 +44,14 @@ MainClass = kw_class id.cName sym_open_curly kw_public kw_static kw_void kw_main
 ClassDeclList = ClassDecl.c ClassDeclList.l                                             {: l.add(c); return l; :}
         |                                                                               {: return new List<ClassDecl>(); :};
 
-ClassDecl = kw_class id.i sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly                 {: return new ClassDecl(i, null, vdl, mdl); :}
-		| kw_class id.i kw_extends id.e sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly   {: return new ClassDecl(i, e, vdl, mdl); :};
+ClassDecl = kw_class id.i sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly                 {: return new ClassDecl(i, new Opt<Id>(), vdl, mdl); :}
+		| kw_class id.i kw_extends id.e sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_close_curly   {: return new ClassDecl(i, new Opt<Id>(e), vdl, mdl); :};
 
 VarDeclList = VarDecl.v VarDeclList.l                                                   {: l.add(v); return l; :}
         |                                                                               {: return new List<VarDecl>(); :};
 VarDecl = Type.t id.i sym_semicolon														{: return new VarDecl(t,i); :};
 
-MethodDeclList = MethodDecl.m MethodDeclList.l                                          {: l.add(m); return m; :}
+MethodDeclList = MethodDecl.m MethodDeclList.l                                          {: l.add(m); return l; :}
         |                                                                               {: return new List<MethodDecl>(); :};
 MethodDecl = kw_public Type.returnType id.methodName sym_open ParamList.params sym_close sym_open_curly VarDeclList.vars StatementList.statements kw_return Exp.ret sym_semicolon sym_close_curly
 																						{: return new MethodDecl(returnType, methodName, params, vars, statements, ret); :}

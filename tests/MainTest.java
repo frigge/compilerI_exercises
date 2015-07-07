@@ -33,3 +33,82 @@ class MainTest{
     	a = (a);
     }
 }
+
+class Empty{
+}
+
+class NotMainTestWithVarsButNoMethods{
+	Integer a;
+	binteger a;
+	int a;
+	int[] a;
+}
+
+class NotMainTestWithOutVarsButWithMethods{
+	public int a(){
+		Integer a;
+    	if(a && b)
+    	a=b;
+    	else
+    	a=b;
+    	return a;
+	}
+	public int a(){
+		Integer a;
+    	if(a && b)
+    	a=b;
+    	else
+    	a=b;
+    	return a;
+	}
+}
+
+
+class NotMainTestWithVarsAndMethods{
+	Integer a;
+	binteger a;
+	int a;
+	int[] a;
+	
+	public int a(){
+		Integer a;
+    	if(a && b)
+    	a=b;
+    	else
+    	a=b;
+    	return a;
+	}
+	public int a(){
+		Integer a;
+    	if(a && b)
+    	a=b;
+    	else
+    	a=b;
+    	return a;
+	}
+}
+
+
+class NotMainTestWithVarsAndMethodsAndExtends extends a{
+	Integer a;
+	binteger a;
+	int a;
+	int[] a;
+	
+	public int a(){
+		Integer a;
+    	if(a && b)
+    	a=b;
+    	else
+    	a=b;
+    	return a;
+	}
+	public int a(){
+		Integer a;
+    	if(a && b)
+    	a=b;
+    	else
+    	a=b;
+    	return a;
+	}
+}
