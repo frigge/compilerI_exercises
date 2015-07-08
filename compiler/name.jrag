@@ -1,0 +1,146 @@
+aspect Name {
+
+        public class SymTabEntry {
+            private Decl node;
+            private SymTabEntry previous;
+            
+            public String getIdent(){
+                return node.getIdent().toString();
+            }
+            
+            
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((node == null) ? 0 : node.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SymTabEntry other = (SymTabEntry) obj;
+        if (node == null) {
+            if (other.node != null)
+                return false;
+        } else if (!node.equals(other.node))
+            return false;
+        return true;
+    }
+        }
+
+        public class SymTab {
+            private Map<String, SymTabEntry> currentValues = new HashMap<>();
+            private Map<Integer, List<SymTabEntry>> valuesOfNL = new HashMap<>();
+            int currentNL = 0;
+            
+            public SymTab() {
+            }
+            
+            public void openScp() {
+                currentNL++;
+                valuesOfNl.put(currentNL,new ArrayList());
+            }
+            
+            public void closeScp() {
+                List<SymTabEntry> currentEntries = valuesOfNL.get(currentNL);
+                for(SymTabEntry e : currentEntries){
+                    if(e.previous == null){
+                        currentValues.remove(e.getIdent());
+                    } else {
+                        currentValues.put(e.getIdent(),e.previous);
+                    }
+                }
+                currentEntries.clean();
+                currentNL--;
+            }
+            
+            public void enter(Decl de) {
+                SymTabEntry entry = new SymTabEntry();
+                entry.node = de;
+                List<SymTabEntry> values = valuesOfNL.get(currentNL);
+                if(values.contains(entry)){
+                    throw new IllegalArgumentException("Previously defined: "+de);
+                } else {
+                    entry.previous = currentValues.get(de.getIdent().toString());
+                    currentValues.put(node.getIdent(),node);
+                }
+            }
+            
+            public Decl lookup(Ident id) {
+                SymTabEntry e = currentValues.get(id.toString());
+                if(e == null){
+                    throw new IllegalArgumentException("Not yet defined: "+id);
+                } else {
+                    return e.node;
+            }
+        }
+        
+    syn lazy SymTab Program.symTab() {
+        return new SymTab();
+    }
+    
+    syn SymTab Program.nameCheck() {
+        getMain().nameCheck(symTab());
+        for (ClassDecl cd : getDeclss()) cd.nameCheck(symTab());
+        return SymTab();
+    }
+    
+    public void MainClass.nameCheck(SymTab tab) {
+        tab.openScp();
+        tab.enter(this);
+        for (VarDecl v : getVariabless()) {
+            v.nameCheck(tab);
+        }
+        for (Statement s : getStatementss()) s.nameCheck(tab);
+        tab.closeScp();
+    }
+    
+  public void ClassDecl.nameCheck(SymTab tab) {
+    tab.openScp();
+    tab.enter(this);
+    if(getExtends() != null){
+    }
+    for (VarDecl f : getVariabless()) {
+      f.nameCheck(tab);
+    }
+    for (MethodDecl m : getMethodss()) m.nameCheck(tab);
+    tab.closeScp();
+  }
+
+  public void MethodDecl.nameCheck(SymTab tab) {
+    tab.enter(this);
+    if (getNumParams() > 0) {
+      getParams(0).print();
+      for (int i = 1; i < getNumParams(); i++) {
+        printer().append(", ");
+        getParams(i).print();
+      }
+    } 
+    printer().append(") {");
+        for (VarDecl v : getVarss()) {
+      printer().append(indent() + PrettyPrinter.INDENT);  
+      v.print();
+      printer().append(";\n");
+    }
+    for (Statement s : getStatementss()) s.print();
+    printer().append(indent() + PrettyPrinter.INDENT + "return ");
+    getReturnExp().print();
+    printer().append(";");
+    printer().append(indent() + "}\n");
+  }
+    
+    public void VarDecl.nameCheck(SymTab tab) {
+       tab.enter(this);
+    }
+    
+    public void VarDecl.nameCheck(SymTab tab) {
+       tab.enter(this);
+    }
+}

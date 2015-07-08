@@ -1,10 +1,10 @@
 Program             ::= Main:MainClass Decls:ClassDecl*;
-MainClass           ::= Ident:Id ParamName:Id Variables:VarDecl* Statements:Statement*;
 
-abstract Decl;
-ClassDecl   :Decl   ::= Ident:Id [Extends:Id] Variables:VarDecl* Methods:MethodDecl*;
-VarDecl     :Decl   ::= T:Type Ident:Id;
-MethodDecl  :Decl   ::= T:Type Ident:Id Params:Param* Vars:VarDecl* Statements:Statement* ReturnExp:Exp;
+abstract Decl       ::= Ident:Id;
+MainClass   :Decl   ::= ParamName:Id Variables:VarDecl* Statements:Statement*;
+ClassDecl   :Decl   ::= [Extends:Id] Variables:VarDecl* Methods:MethodDecl*;
+VarDecl     :Decl   ::= T:Type;
+MethodDecl  :Decl   ::= T:Type Params:Param* Vars:VarDecl* Statements:Statement* ReturnExp:Exp;
 
 Param               ::= T:Type Ident:Id;
 

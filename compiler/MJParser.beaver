@@ -49,14 +49,14 @@ ClassDecl = kw_class id.i sym_open_curly VarDeclList.vdl MethodDeclList.mdl sym_
 
 VarDeclList = VarDecl.v VarDeclList.l                                                   {: l.add(v); return l; :}
         |                                                                               {: return new List<VarDecl>(); :};
-VarDecl = Type.t id.i sym_semicolon														{: return new VarDecl(t,i); :};
+VarDecl = Type.t id.i sym_semicolon														{: return new VarDecl(i,t); :};
 
 MethodDeclList = MethodDecl.m MethodDeclList.l                                          {: l.add(m); return l; :}
         |                                                                               {: return new List<MethodDecl>(); :};
 MethodDecl = kw_public Type.returnType id.methodName sym_open ParamList.params sym_close sym_open_curly VarDeclList.vars StatementList.statements kw_return Exp.ret sym_semicolon sym_close_curly
-																						{: return new MethodDecl(returnType, methodName, params, vars, statements, ret); :}
+																						{: return new MethodDecl(methodName, returnType, params, vars, statements, ret); :}
 		| kw_public Type.returnType id.methodName sym_open sym_close sym_open_curly VarDeclList.vars StatementList.statements kw_return Exp.ret sym_semicolon sym_close_curly
-																						{: return new MethodDecl(returnType, methodName, new List<Param>(), vars, statements, ret); :};
+																						{: return new MethodDecl(methodName, returnType, new List<Param>(), vars, statements, ret); :};
 
 ParamList = Type.t id.i ParamRestList.l													{: Param p = new Param(t,i); l.add(p); return l; :};
 ParamRestList = ParamRest.p ParamRestList.l												{: l.add(p); return l; :}
