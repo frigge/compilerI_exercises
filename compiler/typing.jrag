@@ -1,0 +1,15 @@
+aspect typing {
+	public abstract String Type.typeValue();
+	public String IntArrType.typeValue() {
+		return "int[]";
+	}
+	public String BooleanType.typeValue() {
+		return "boolean";
+	}
+	public String IntType.typeValue() {
+		return "int";
+	}
+	public String IdType.typeValue() {
+		return getIdent().getIdent();
+	}
+}

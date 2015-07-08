@@ -1,0 +1,13 @@
+aspect Error {
+	public class CompilationError{
+		private String reason;
+
+		public CompilationError(String reason) {
+			super();
+			this.reason = reason;
+		}
+		public String getReason() {
+			return reason;
+		}
+	}
+}
