@@ -1,0 +1,45 @@
+aspect checking {
+	public void Program.check() {
+    	this.buildLookup();
+    	this.computeTypes();
+    	this.buildMethodLookup();
+    	this.typeAndLocalNameAnalysis();
+	}
+	
+	public void Program.typeAndLocalNameAnalysis(){
+		getMain().typeAndLocalNameAnalysis();
+    	for (ClassDecl cd : getDeclss()) cd.typeAndLocalNameAnalysis();
+	}
+	
+	public abstract void Decl.typeAndLocalNameAnalysis();
+  	public void MainClass.typeAndLocalNameAnalysis() {
+  		localLookup().openScp();
+		for (VarDecl v : getVariabless()) localLookup().enter(v);
+		for (Statement s : getStatementss()) s.typeAndLocalNameAnalysis();
+  		localLookup().closeScp();
+	}
+  public void ClassDecl.typeAndLocalNameAnalysis() {
+  	localLookup().openClass(this);
+	for (VarDecl v : getVariabless()) localLookup().enter(v);
+	for (MethodDecl m : getMethodss()) m.typeAndLocalNameAnalysis();
+  	localLookup().closeClass();
+  }
+
+  public void MethodDecl.typeAndLocalNameAnalysis() {
+  	localLookup().openScp();
+	for (VarDecl v : getParamss()) localLookup().enter(v);
+	for (VarDecl v : getVarss()) localLookup().enter(v);
+    for (Statement s : getStatementss()) s.typeAndLocalNameAnalysis();
+	Type returnType = getReturnExp().getAndCheckType();
+	if(!returnType.equals(getT())) addError("Return Type passt nicht zum definierten Typ (Zeile "+getFirstLine()+")");
+  	localLookup().closeScp();
+  }
+  
+  public void VarDecl.typeAndLocalNameAnalysis() {
+  	throw new UnsupportedOperationException();
+  }
+  
+  public void Statement.typeAndLocalNameAnalysis(){
+  
+  }
+}

@@ -1,0 +1,33 @@
+aspect typeComp {
+	
+	public void Program.computeTypes() {
+	}
+	
+	public abstract Type Type.supertype();
+	public Type IntArrType.supertype() {
+		return null;
+	}
+	public Type BooleanType.supertype() {
+		return null;
+	}
+	public Type IntType.supertype() {
+		return null;
+	}
+	public Type IdType.supertype() {
+		Decl d = lookup().lookupClass(getIdent().getIdent());
+		if(d == null){
+			addError(getIdent().getIdent() + " ist keine definierte Klasse.");
+			return null;
+		} else {
+			if(d instanceof ClassDecl){
+				ClassDecl c = (ClassDecl) d;
+				if (c.getExtends() != null){
+					return new IdType(this.getFirstLine(), c.getExtends());
+				}
+			} else {
+				addError("Unexpected situation occured while defininig supertype for "+this.getIdent().getIdent());
+			}
+		} 
+		return null;
+	}
+}

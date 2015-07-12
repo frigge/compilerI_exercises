@@ -1,7 +1,17 @@
 aspect typing {
-	public abstract String Type.typeValue();
+	public boolean Type.equals(Object o){
+		if(o instanceof Type){
+			Type t = (Type) o;
+			return typeValue().equals(t.typeValue());
+		} else {
+			return false;
+		}
+	}
+
+	public abstract String Type.typeValue();	
 	public String IntArrType.typeValue() {
 		return "int[]";
+		
 	}
 	public String BooleanType.typeValue() {
 		return "boolean";
@@ -11,5 +21,107 @@ aspect typing {
 	}
 	public String IdType.typeValue() {
 		return getIdent().getIdent();
+	}
+	
+	public abstract Type Op.requiredType();
+	public Type And.requiredType(){
+		return new BooleanType();
+	}
+	public Type Plus.requiredType(){
+		return new IntType();
+	}
+	public Type Minus.requiredType(){
+		return new IntType();
+	}
+	public Type Mul.requiredType(){
+		return new IntType();
+	}
+	public Type Less.requiredType(){
+		return new IntType();
+	}
+	
+	public abstract Type Exp.getAndCheckType();
+	public Type BinOpExp.getAndCheckType(){
+		Type required = getO().requiredType();
+		Type l = getL().getAndCheckType();
+		Type r = getR().getAndCheckType();
+		if(!(l.equals(required) && r.equals(required))){
+			addError("Fehler in BinOpExp in Zeile "+getFirstLine());	
+		}
+		return required;
+	}
+	public Type ArrayExp.getAndCheckType(){
+		Type feld = getFeld().getAndCheckType();
+		Type position = getPosition().getAndCheckType();
+		if(!(feld instanceof IntArrType && position instanceof IntType)){
+			addError("Fehler in ArrayExp (Feld ist kein Array oder die Position kein int) in Zeile "+getFirstLine());	
+		}
+		return new IntType();
+	}
+	public Type LengthExp.getAndCheckType(){
+		Type feld = getFeld().getAndCheckType();
+		if(!(feld instanceof IntArrType)){
+			addError("Fehler in LengthExp (Exp ist kein Array) in Zeile "+getFirstLine());	
+		}
+		return new IntType();
+	}
+	public Type MethodExp.getAndCheckType(){
+		//TODO		
+		Type feld = getFeld().getAndCheckType();
+		List<Exp> parameterExp = getParameters();
+		List<Type> parameter = new List<Type>();
+		for(Exp e: parameterExp){
+			parameter.add(e.getAndCheckType());
+		}
+		ClassDecl klass = lookup().lookupClass(feld);
+		if(klass == null){
+			addError("Fehler in MethodExp: Kann Klasse vom typ "+feld.typeValue()+" nicht finden (Zeile "+getFirstLine()+")");
+			throw new IllegalStateException();
+		}
+		
+		MethodDecl m = (MethodDecl) lookup().lookupMethod(klass,getMethod().getIdent(),parameter);
+		return m.getT();
+	}
+	public Type TrueExp.getAndCheckType(){
+		return new BooleanType();
+	}
+	public Type FalseExp.getAndCheckType(){
+		return new BooleanType();
+	}
+	public Type IdExp.getAndCheckType(){
+		VarDecl v = localLookup().lookup(getName());
+		if(v == null){
+			addError("Fehler in IdExp: Feld "+getName()+" nicht deklariert (Zeile "+getFirstLine()+")");
+			throw new IllegalStateException();
+		
+		}
+		return v.getT();
+	}
+	public Type IntLit.getAndCheckType(){
+		return new IntType();
+	}
+	public Type ThisExp.getAndCheckType(){
+		return new IdType(getFirstLine(),localLookup().getClassDecl().getIdent());
+	}
+	public Type IntArrExp.getAndCheckType(){
+		return new IntArrType();
+	}
+	public Type NewExp.getAndCheckType(){
+		ClassDecl c = lookup().lookupClass(getKlasse().getIdent());
+		if(c == null){
+			addError("Fehler in NewExp: Kann Klasse "+getKlasse().getIdent()+" nicht finden (Zeile "+getFirstLine()+")");
+			throw new IllegalStateException();
+		}
+		return new IdType(getFirstLine(),c.getIdent());
+	}
+	public Type NotExp.getAndCheckType(){
+		Type wert = getWert().getAndCheckType();
+		if(!(wert instanceof BooleanType)){
+			addError("Fehler in NotExp: Expression nicht boolsch (Zeile "+getFirstLine()+")");
+		}
+		return new BooleanType();
+	}
+	public Type Geklammert.getAndCheckType(){
+		return getExpression().getAndCheckType();
 	}
 }

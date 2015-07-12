@@ -1,0 +1,103 @@
+aspect localLookupTable{
+
+	public class LocalLookupTableEntry {
+        public VarDecl node;
+        public LocalLookupTableEntry previous;
+        
+        public String getIdent(){
+            return node.getIdent().toString();
+        }
+            
+            
+	    @Override
+	    public int hashCode() {
+	        final int prime = 31;
+	        int result = 1;
+	        result = prime * result + ((node == null) ? 0 : node.hashCode());
+	        return result;
+	    }
+
+	    @Override
+	    public boolean equals(Object obj) {
+	        if (this == obj)
+	            return true;
+	        if (obj == null)
+	            return false;
+	        if (getClass() != obj.getClass())
+	            return false;
+	        LocalLookupTableEntry other = (LocalLookupTableEntry) obj;
+	        if (node == null) {
+	            if (other.node != null)
+	                return false;
+	        } else if (!node.equals(other.node))
+	            return false;
+	        return true;
+	    }
+    }
+
+    public class LocalLookup {
+        private java.util.Map<String, LocalLookupTableEntry> currentValues = new java.util.HashMap<String, LocalLookupTableEntry>();
+        private java.util.Map<Integer, java.util.List<LocalLookupTableEntry>> valuesOfNL = new java.util.HashMap<Integer, java.util.List<LocalLookupTableEntry>>();
+        private ClassDecl lastClass;
+        int currentNL = 0;
+        
+        public LocalLookup() {
+        }
+        
+        public ClassDecl getClassDecl(){
+        	return lastClass;
+        }
+        
+        public void openClass(ClassDecl c) {
+        	lastClass = c;
+        	openScp();
+            currentNL++;
+            valuesOfNL.put(currentNL,new java.util.ArrayList());
+        }
+        
+        public void openScp() {
+            currentNL++;
+            valuesOfNL.put(currentNL,new java.util.ArrayList());
+        }
+        
+        public void closeClass() {
+            lastClass = null;
+            closeScp();
+        }
+        
+        public void closeScp() {
+            java.util.List<LocalLookupTableEntry> currentEntries = valuesOfNL.get(currentNL);
+            for(LocalLookupTableEntry e : currentEntries){
+                if(e.previous == null){
+                    currentValues.remove(e.getIdent());
+                } else {
+                    currentValues.put(e.getIdent(),e.previous);
+                }
+            }
+            currentEntries.clear();
+            currentNL--;
+        }
+        
+        public CompilationError enter(VarDecl varDecl) {
+            LocalLookupTableEntry entry = new LocalLookupTableEntry();
+            entry.node = varDecl;
+            java.util.List<LocalLookupTableEntry> values = valuesOfNL.get(currentNL);
+            if(values.contains(entry)){
+                return new CompilationError("Variable "+ varDecl.getIdent().getIdent()+" (Zeile "+varDecl.getFirstLine()+") schon definiert");
+            } else {
+                entry.previous = currentValues.get(varDecl.getIdent().toString());
+                currentValues.put(entry.getIdent(),entry);
+                return null;
+            }
+        }
+        
+        public VarDecl lookup(Id id) {
+            LocalLookupTableEntry e = currentValues.get(id.toString());
+            if(e == null){
+                throw new IllegalArgumentException("Variable"+ id.getIdent()+" aus Zeile "+id.getFirstLine()+" nicht deklariert");
+            } else {
+                return e.node;
+            }
+        }
+    }
+}

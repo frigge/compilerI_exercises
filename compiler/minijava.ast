@@ -1,20 +1,19 @@
-Program             ::= Main:MainClass Decls:ClassDecl*;
-MainClass           ::= Ident:Id ParamName:Id Variables:VarDecl* Statements:Statement*;
+abstract Code		::= <FirstLine>;
+Program     :Code   ::= Main:MainClass Decls:ClassDecl*;
 
-abstract Decl;
-ClassDecl   :Decl   ::= Ident:Id [Extends:Id] Variables:VarDecl* Methods:MethodDecl*;
-VarDecl     :Decl   ::= T:Type Ident:Id;
-MethodDecl  :Decl   ::= T:Type Ident:Id Params:Param* Vars:VarDecl* Statements:Statement* ReturnExp:Exp;
+abstract Decl :Code	::= Ident:Id;
+MainClass   :Decl   ::= ParamName:Id Variables:VarDecl* Statements:Statement*;
+ClassDecl   :Decl   ::= [Extends:Id] Variables:VarDecl* Methods:MethodDecl*;
+VarDecl     :Decl   ::= T:Type;
+MethodDecl  :Decl   ::= T:Type Params:VarDecl* Vars:VarDecl* Statements:Statement* ReturnExp:Exp;
 
-Param               ::= T:Type Ident:Id;
-
-abstract Type;
+abstract Type :Code;
 IntArrType	:Type;
 BooleanType	:Type;
 IntType		:Type;
 IdType		:Type	::= Ident:Id;
 
-abstract Statement;
+abstract Statement :Code;
 StmList     :Statement ::= Statements:Statement*;
 IfThenElse  :Statement ::= If:Exp Then:Statement Else:Statement;
 While       :Statement ::= Bedingung:Exp Statement;
@@ -22,7 +21,7 @@ Syso        :Statement ::= Exp;
 Zuweisung   :Statement ::= Ident:Id Exp;
 ArrZuw      :Statement ::= Ident:Id Pos:Exp Value:Exp;
 
-abstract Exp;
+abstract Exp :Code;
 BinOpExp 	:Exp 	::= L:Exp O:Op R:Exp;
 ArrayExp 	:Exp 	::= Feld:Exp Position:Exp;
 LengthExp 	:Exp	::= Feld:Exp;
@@ -37,11 +36,11 @@ NewExp		:Exp	::= Klasse:Id;
 NotExp		:Exp	::= Wert:Exp;
 Geklammert	:Exp	::= Expression:Exp;
 
-Id ::= <Ident>; 
+Id          :Code   ::= <Ident>;
 
-abstract Op;
-And :Op;
-Plus :Op;
-Minus :Op; 
-Mul :Op;
-Less :Op;
+abstract Op :Code;
+And 		:Op;
+Plus 		:Op;
+Minus 		:Op; 
+Mul 		:Op;
+Less 		:Op;

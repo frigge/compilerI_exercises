@@ -10,4 +10,81 @@ aspect Error {
 			return reason;
 		}
 	}
+	
+	syn lazy java.util.List<CompilationError> Program.error() {
+  		return new java.util.ArrayList<CompilationError>();
+  	}
+  	eq Program.getMain().error() = this.error();
+	eq Program.getDecls().error() = this.error();
+	eq Decl.getIdent().error() = this.error();
+	  
+	inh lazy java.util.List<CompilationError> Decl.error();
+	inh lazy java.util.List<CompilationError> Statement.error();
+	inh lazy java.util.List<CompilationError> Exp.error();
+	inh lazy java.util.List<CompilationError> Type.error();
+	inh lazy java.util.List<CompilationError> Op.error();
+	inh lazy java.util.List<CompilationError> Id.error();
+	
+	protected void Program.addError(String errorMessage) {
+    	this.error().add(new CompilationError(errorMessage));
+  	}
+	protected void Program.addError(CompilationError error) {
+		if(error != null){
+			this.error().add(error);
+		}
+  	}
+  
+  	protected void Decl.addError(String errorMessage) {
+    	this.error().add(new CompilationError(errorMessage));
+  	}
+	protected void Decl.addError(CompilationError error) {
+		if(error != null){
+			this.error().add(error);
+		}
+  	}
+  
+  	protected void Type.addError(String errorMessage) {
+    	this.error().add(new CompilationError(errorMessage));
+  	}
+	protected void Type.addError(CompilationError error) {
+		if(error != null){
+			this.error().add(error);
+		}
+  	}
+  
+  	protected void Statement.addError(String errorMessage) {
+    	this.error().add(new CompilationError(errorMessage));
+  	}
+	protected void Statement.addError(CompilationError error) {
+		if(error != null){
+			this.error().add(error);
+		}
+  	}
+  
+  	protected void Exp.addError(String errorMessage) {
+    	this.error().add(new CompilationError(errorMessage));
+  	}
+	protected void Exp.addError(CompilationError error) {
+		if(error != null){
+			this.error().add(error);
+		}
+  	}
+  
+  	protected void Id.addError(String errorMessage) {
+    	this.error().add(new CompilationError(errorMessage));
+  	}
+	protected void Id.addError(CompilationError error) {
+		if(error != null){
+			this.error().add(error);
+		}
+  	}
+  
+  	protected void Op.addError(String errorMessage) {
+    	this.error().add(new CompilationError(errorMessage));
+  	}
+	protected void Op.addError(CompilationError error) {
+		if(error != null){
+			this.error().add(error);
+		}
+  	}
 }

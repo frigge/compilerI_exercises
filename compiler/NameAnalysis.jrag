@@ -171,80 +171,112 @@ aspect checking {
 	public java.util.List<CompilationError> Program.nameCheck() {
 		DeclTable t = declTable();
 		java.util.List errors = new ArrayList<CompilationError>();
-    	errors.addAll(getMain().nameCheck(t));
-    	for (ClassDecl cd : getDeclss()) errors.addAll(cd.nameCheck(t));
+    	errors.addAll(getMain().firstCheck(t));
+    	for (ClassDecl cd : getDeclss()) errors.addAll(cd.firstCheck(t));
 	    return errors;
 	}
 	
-	public abstract java.util.List<CompilationError> Decl.nameCheck(DeclTable t);
-	public java.util.List<CompilationError> MainClass.nameCheck(DeclTable t) {
+	public abstract java.util.List<CompilationError> Decl.firstCheck(DeclTable t);
+	public java.util.List<CompilationError> MainClass.firstCheck(DeclTable t) {
 		java.util.List errors = new ArrayList<CompilationError>();
 		t.incNL();
-		errors.addAll(getParamName().nameCheck(t));
-		for (VarDecl v : getVariabless()) errors.addAll(v.nameCheck(t));
-		for (Statement s : getStatementss()) errors.addAll(s.nameCheck(t));
+		try{t.enter(this)} catch (IllegalArgumentException e) {errors.add(new CompilationError("MainClass "+e))};  
+		errors.addAll(getParamName().firstCheck(t));
+		for (VarDecl v : getVariabless()) errors.addAll(v.firstCheck(t));
+		for (Statement s : getStatementss()) errors.addAll(s.firstCheck(t));
 		t.decNL();
 		return errors;
 	}
-	public java.util.List<CompilationError> ClassDecl.nameCheck(DeclTable t) {
+	public java.util.List<CompilationError> ClassDecl.firstCheck(DeclTable t) {
 		java.util.List errors = new ArrayList<CompilationError>();
 		t.incNL();
-		errors.addAll(getIdent().nameCheck(t));  	
-		for (VarDecl f : getVariabless()) errors.addAll(f.nameCheck(t));
-		for (MethodDecl m : getMethodss()) errors.addAll(m.nameCheck(t));
+		try{t.enter(this)} catch (IllegalArgumentException e) {errors.add(new CompilationError("ClassDecl "+e))};  	
+		for (VarDecl f : getVariabless()) errors.addAll(f.firstCheck(t));
+		for (MethodDecl m : getMethodss()) errors.addAll(m.firstCheck(t));
 		t.decNL();
 		return errors;
 	}
 	
-	public java.util.List<CompilationError> MethodDecl.nameCheck(DeclTable t) {
-	printer().append(indent() + "public ");
-	getT().print();
-	printer().append(" ");
-	getIdent().print();
-	printer().append("(");
-	if (getNumParams() > 0) {
-	getParams(0).print();
-	for (int i = 1; i < getNumParams(); i++) {
-	printer().append(", ");
-	getParams(i).print();
+	public java.util.List<CompilationError> MethodDecl.firstCheck(DeclTable t) {
+		java.util.List errors = new ArrayList<CompilationError>();
+		t.incNL();
+		errors.addAll(getT().firstCheck(t));
+		try{t.enter(this)} catch (IllegalArgumentException e) {errors.add(new CompilationError("MethodDecl "+e))};
+		for (VarDecl v : getVarss()) errors.addAll(v.firstCheck(t));
+		for (Statement s : getStatementss()) errors.addAll(s.firstCheck(t));
+		errors.addAll(getReturnExp().firstCheck(t));
+		return errors;
 	}
-	} 
-	printer().append(") {");
-	for (VarDecl v : getVarss()) {
-	printer().append(indent() + PrettyPrinter.INDENT);  
-	v.print();
-	printer().append(";\n");
+	public java.util.List<CompilationError> VarDecl.firstCheck(DeclTable t) {
+		java.util.List errors = new ArrayList<CompilationError>();
+		errors.addAll(getT().firstCheck(t));
+		try{t.enter(this)} catch (IllegalArgumentException e) {errors.add(new CompilationError("VarDecl "+e))};
+		return errors;
 	}
-	for (Statement s : getStatementss()) s.print();
-	printer().append(indent() + PrettyPrinter.INDENT + "return ");
-	getReturnExp().print();
-	printer().append(";");
-	printer().append(indent() + "}\n");
+	public java.util.List<CompilationError> Param.firstCheck(DeclTable t){
+		java.util.List errors = new ArrayList<CompilationError>();
+		errors.addAll(getT().firstCheck(t));
+		try{t.enter(this)} catch (IllegalArgumentException e) {errors.add(new CompilationError("Param "+e))};
+		return errors;
 	}
 	
-	public void VarDecl.print() {
-	getT().print();
-	printer().append(" ");
-	getIdent().print();
+	public abstract java.util.List<CompilationError> Decl.secondCheck(DeclTable t);
+	public java.util.List<CompilationError> MainClass.secondCheck(DeclTable t) {
+		java.util.List errors = new ArrayList<CompilationError>();
+		t.incNL();
+		try{t.enter(this)} catch (IllegalArgumentException e) {errors.add(new CompilationError("MainClass "+e))};  
+		errors.addAll(getParamName().firstCheck(t));
+		for (VarDecl v : getVariabless()) errors.addAll(v.firstCheck(t));
+		for (Statement s : getStatementss()) errors.addAll(s.firstCheck(t));
+		t.decNL();
+		return errors;
 	}
-	public void Param.print(){
-	getT().print();
-	printer().append(" ");
-	getIdent().print();
+	public java.util.List<CompilationError> ClassDecl.secondCheck(DeclTable t) {
+		java.util.List errors = new ArrayList<CompilationError>();
+		t.incNL();
+		try{t.enter(this)} catch (IllegalArgumentException e) {errors.add(new CompilationError("ClassDecl "+e))};  	
+		for (VarDecl f : getVariabless()) errors.addAll(f.firstCheck(t));
+		for (MethodDecl m : getMethodss()) errors.addAll(m.firstCheck(t));
+		t.decNL();
+		return errors;
+	}
+	
+	public java.util.List<CompilationError> MethodDecl.secondCheck(DeclTable t) {
+		java.util.List errors = new ArrayList<CompilationError>();
+		t.incNL();
+		errors.addAll(getT().firstCheck(t));
+		try{t.enter(this)} catch (IllegalArgumentException e) {errors.add(new CompilationError("MethodDecl "+e))};
+		for (VarDecl v : getVarss()) errors.addAll(v.firstCheck(t));
+		for (Statement s : getStatementss()) errors.addAll(s.firstCheck(t));
+		errors.addAll(getReturnExp().firstCheck(t));
+		return errors;
+	}
+	public java.util.List<CompilationError> VarDecl.secondCheck(DeclTable t) {
+		java.util.List errors = new ArrayList<CompilationError>();
+		errors.addAll(getT().firstCheck(t));
+		try{t.enter(this)} catch (IllegalArgumentException e) {errors.add(new CompilationError("VarDecl "+e))};
+		return errors;
+	}
+	public java.util.List<CompilationError> Param.secondCheck(DeclTable t){
+		java.util.List errors = new ArrayList<CompilationError>();
+		errors.addAll(getT().firstCheck(t));
+		try{t.enter(this)} catch (IllegalArgumentException e) {errors.add(new CompilationError("Param "+e))};
+		return errors;
 	}
 	  
-	public abstract void Type.print();
-	public void IntArrType.print() {
-	printer().append("int[]");
+	public abstract java.util.List<CompilationError> Type.secondCheck(DeclTable t);
+	public java.util.List<CompilationError> IntArrType.secondCheck(DeclTable t) {
+		return new ArrayList<CompilationError>();
 	}
-	public void BooleanType.print() {
-	printer().append("boolean");
+	public java.util.List<CompilationError> BooleanType.secondCheck(DeclTable t) {
+		return new ArrayList<CompilationError>();
 	}
-	public void IntType.print() {
-	printer().append("int");
+	public java.util.List<CompilationError> IntType.secondCheck(DeclTable t) {
+		return new ArrayList<CompilationError>();
 	}
-	public void IdType.print() {
-	getIdent().print();
+	public java.util.List<CompilationError> IdType.secondCheck(DeclTable t) {
+		java.util.List errors = return new ArrayList<CompilationError>();
+		getIdent().print();
 	}
 	
 	public abstract void Statement.print();
