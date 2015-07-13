@@ -1,13 +1,4 @@
 aspect typing {
-	public boolean Type.equals(Object o){
-		if(o instanceof Type){
-			Type t = (Type) o;
-			return typeValue().equals(t.typeValue());
-		} else {
-			return false;
-		}
-	}
-
 	public abstract String Type.typeValue();	
 	public String IntArrType.typeValue() {
 		return "int[]";
@@ -101,7 +92,11 @@ aspect typing {
 		return new IntType();
 	}
 	public Type ThisExp.getAndCheckType(){
-		return new IdType(getFirstLine(),localLookup().getClassDecl().getIdent());
+		ClassDecl klass = localLookup().getClassDecl();
+		if(klass == null){
+			addError("Fehler in ThisExp: Kein ausführendes Objekt bekannt (Zeile "+getFirstLine()+")");
+		}
+		return new IdType(getFirstLine(),klass.getIdent());
 	}
 	public Type IntArrExp.getAndCheckType(){
 		return new IntArrType();

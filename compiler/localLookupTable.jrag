@@ -13,7 +13,7 @@ aspect localLookupTable{
 	    public int hashCode() {
 	        final int prime = 31;
 	        int result = 1;
-	        result = prime * result + ((node == null) ? 0 : node.hashCode());
+	        result = prime * result + ((node == null) ? 0 : node.getIdent().getIdent().hashCode());
 	        return result;
 	    }
 
@@ -29,7 +29,7 @@ aspect localLookupTable{
 	        if (node == null) {
 	            if (other.node != null)
 	                return false;
-	        } else if (!node.equals(other.node))
+	        } else if (!node.getIdent().getIdent().equals(other.node.getIdent().getIdent()))
 	            return false;
 	        return true;
 	    }
@@ -87,6 +87,7 @@ aspect localLookupTable{
             } else {
                 entry.previous = currentValues.get(varDecl.getIdent().toString());
                 currentValues.put(entry.getIdent(),entry);
+                values.add(entry);
                 return null;
             }
         }

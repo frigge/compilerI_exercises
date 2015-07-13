@@ -1,6 +1,94 @@
 aspect typeComp {
+
+	public int Type.hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((typeValue() == null) ? 0 : typeValue().hashCode());
+		return result;
+	}
+
+	public boolean Type.equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Type other = (Type) obj;
+		if (typeValue() == null) {
+			if (other.typeValue() != null)
+				return false;
+		} else if (!typeValue().equals(other.typeValue()))
+			return false;
+		return true;
+	}
+	
+	public class TypeTree {
+		private java.util.Map<Type,TreeElem> treeMap = new java.util.HashMap<Type,TreeElem>();
+		
+		public CompilationError addElement(Id i, Lookup l){
+			if(!treeMap.containsKey(new IdType(i.getFirstLine(),i))){
+				ClassDecl c = l.lookupClass(i.getIdent());
+				if(c == null){
+					return new CompilationError("Kann Klasse zum Typen "+i.getIdent()+" nicht finden (Zeile "+i.getFirstLine()+")");
+				}
+				TreeElem element = new TreeElem(c);
+				if(c.getExtends() != null){
+					CompilationError e = addElement(c.getExtends(),l);
+					element.setSuperType(treeMap.get(new IdType(c.getFirstLine(),c.getExtends())));
+				} 
+			}
+			return null;
+		}
+		
+		public ClassDecl supertypeOf(Type a){
+			TreeElem superType = treeMap.get(a).getSupertype();
+			return superType == null ? null : superType.getType();
+		}
+		
+		public boolean instanceOf(Type a, Type b){
+			TreeElem ae = treeMap.get(a);
+			TreeElem be = treeMap.get(b);
+			
+			while(ae != null){
+				if(ae.getType() == be.getType()){
+					return true;
+				} else {
+					ae = ae.getSupertype();
+				}
+			}
+			return false;
+		}
+		
+		private class TreeElem {
+			private ClassDecl node;
+			private TreeElem superType = null;
+			
+			public TreeElem(ClassDecl node){
+				this.node = node;
+			}
+			
+			public void setSuperType(TreeElem superType){
+				this.superType = superType;
+			}
+			
+			public ClassDecl getType(){
+				return node;
+			}
+			
+			public TreeElem getSupertype(){
+				return superType;
+			}
+		}
+	}
+	
+	
+	syn lazy TypeTree Type.tree() {
+		return new TypeTree();
+	}
 	
 	public void Program.computeTypes() {
+		
 	}
 	
 	public abstract Type Type.supertype();
@@ -14,20 +102,23 @@ aspect typeComp {
 		return null;
 	}
 	public Type IdType.supertype() {
-		Decl d = lookup().lookupClass(getIdent().getIdent());
-		if(d == null){
-			addError(getIdent().getIdent() + " ist keine definierte Klasse.");
-			return null;
-		} else {
-			if(d instanceof ClassDecl){
-				ClassDecl c = (ClassDecl) d;
-				if (c.getExtends() != null){
-					return new IdType(this.getFirstLine(), c.getExtends());
-				}
-			} else {
-				addError("Unexpected situation occured while defininig supertype for "+this.getIdent().getIdent());
-			}
-		} 
-		return null;
+		CompilationError error = tree().addElement(getIdent(),lookup());
+		addError(error);
+		ClassDecl c = tree().supertypeOf(this);
+		return c == null ? null : new IdType(c.getFirstLine(),c.getIdent());
+	}
+	
+	public abstract boolean Type.instanceOf(Type t);
+	public boolean IntArrType.instanceOf(Type t) {
+		return t instanceof IntArrType;
+	}
+	public boolean BooleanType.instanceOf(Type t) {
+		return t instanceof BooleanType;
+	}
+	public boolean IntType.instanceOf(Type t) {
+		return t instanceof IntType;
+	}
+	public boolean IdType.instanceOf(Type t) {
+		return tree().instanceOf(this,t);
 	}
 }
