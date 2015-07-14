@@ -28,6 +28,34 @@ class FehlerSammlung{
 		d[c] = a;
 		return 0;
 	}
+	
+	public int funktionierendesIfThenElse(){
+		if((!(x<y)) && (!(y<x)))
+			System.out.println(x);
+		else
+			System.out.println(y);
+		return 0;
+	}
+	
+	public int fehlerhaftesIfThenElse(){
+		if(x)
+			System.out.println(x);
+		else
+			System.out.println(y);
+		return 0;
+	}
+	
+	public int funktionierendesWhile(){
+		while((!(x<y)) && (!(y<x)))
+			System.out.println(x);
+		return 0;
+	}
+	
+	public int fehlerhaftesWhile(){
+		while(x)
+			System.out.println(x);
+		return 0;
+	}
 }
 
 class Integer{

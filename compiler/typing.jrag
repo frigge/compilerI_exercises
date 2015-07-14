@@ -15,20 +15,36 @@ aspect typing {
 	}
 	
 	public abstract Type Op.requiredType();
+	public abstract Type Op.result();
 	public Type And.requiredType(){
+		return new BooleanType();
+	}
+	public Type And.result(){
 		return new BooleanType();
 	}
 	public Type Plus.requiredType(){
 		return new IntType();
 	}
+	public Type Plus.result(){
+		return new IntType();
+	}
 	public Type Minus.requiredType(){
+		return new IntType();
+	}
+	public Type Minus.result(){
 		return new IntType();
 	}
 	public Type Mul.requiredType(){
 		return new IntType();
 	}
+	public Type Mul.result(){
+		return new IntType();
+	}
 	public Type Less.requiredType(){
 		return new IntType();
+	}
+	public Type Less.result(){
+		return new BooleanType();
 	}
 	
 	public abstract Type Exp.getAndCheckType();
@@ -39,7 +55,7 @@ aspect typing {
 		if(!(l.equals(required) && r.equals(required))){
 			addError("Fehler in BinOpExp in Zeile "+getFirstLine());	
 		}
-		return required;
+		return getO().result();
 	}
 	public Type ArrayExp.getAndCheckType(){
 		Type feld = getFeld().getAndCheckType();

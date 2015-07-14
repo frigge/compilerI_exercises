@@ -1,0 +1,8 @@
+class FehlerSammlung{
+	Integer a;
+	int c;
+	int[] d;
+	int x;
+	int y;
+	
+}
