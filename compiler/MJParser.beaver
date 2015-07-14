@@ -76,7 +76,7 @@ Type = t_int.first sym_open_square sym_close_square 									{: return new IntAr
 		| t_int.first 																	{: return new IntType(getLine(first)); :}
 		| id.i																			{: return new IdType(getLine(i),i); :};
 
-StatementList = StatementList.l Statement.s                                             {: l.add(s); return(l); :}
+StatementList = Statement.s StatementList.l                                             {: List<Statement> l2 = new List<Statement>(); l2.add(s); for(Statement s2: l) l2.add(s2); return(l2); :}
         |                                                                               {: return new List<Statement>(); :};
 Statement = sym_open_curly.first StatementList.l sym_close_curly 						{: return new StmList(getLine(first),l); :}
         | kw_if.first sym_open Exp.i sym_close Statement.t kw_else Statement.e			{: return new IfThenElse(getLine(first),i,t,e); :}

@@ -62,7 +62,11 @@ aspect typing {
 		List<Exp> parameterExp = getParameters();
 		List<Type> parameter = new List<Type>();
 		for(Exp e: parameterExp){
-			parameter.add(e.getAndCheckType());
+			try{
+			parameter.add(e.getAndCheckType().clone());
+			} catch (CloneNotSupportedException error) {
+				throw new UnsupportedOperationException("Do not know why unsupported :(", error);
+			}
 		}
 		ClassDecl klass = lookup().lookupClass(feld);
 		if(klass == null){
@@ -95,6 +99,7 @@ aspect typing {
 		ClassDecl klass = localLookup().getClassDecl();
 		if(klass == null){
 			addError("Fehler in ThisExp: Kein ausführendes Objekt bekannt (Zeile "+getFirstLine()+")");
+			throw new IllegalStateException();
 		}
 		return new IdType(getFirstLine(),klass.getIdent());
 	}

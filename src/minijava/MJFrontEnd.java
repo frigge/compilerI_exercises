@@ -10,7 +10,8 @@ class MJFrontEnd {
       System.out.println("MJFrontEnd: missing file command line argument");
       //System.exit(1);
 //      inputFileName = "tests/MainTest.java";
-      inputFileName = "tests/MainTestForLookup.java";
+//      inputFileName = "tests/MainTestForLookup.java";
+      inputFileName = "tests/MainTestForType.java";
     }
    else {
       System.out.println("MJFrontEnd: starting on file " + args[0]);

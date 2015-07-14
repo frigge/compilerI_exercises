@@ -95,7 +95,7 @@ aspect localLookupTable{
         public VarDecl lookup(Id id) {
             LocalLookupTableEntry e = currentValues.get(id.toString());
             if(e == null){
-                throw new IllegalArgumentException("Variable"+ id.getIdent()+" aus Zeile "+id.getFirstLine()+" nicht deklariert");
+            	return null;
             } else {
                 return e.node;
             }
