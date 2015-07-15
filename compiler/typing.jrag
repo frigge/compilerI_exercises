@@ -134,9 +134,13 @@ aspect typing {
 			addError("Fehler in ThisExp: Kein ausführendes Objekt bekannt (Zeile "+getFirstLine()+")");
 			throw new IllegalStateException();
 		}
-		IdType t = new IdType(getFirstLine(),klass.getIdent());
-		t.setParent(this);
-		return t;
+		try{
+			IdType t = new IdType(getFirstLine(),klass.getIdent().clone());
+			t.setParent(this);
+			return t;
+		} catch (CloneNotSupportedException e){
+			throw new UnsupportedOperationException(e);
+		}
 	}
 	public Type IntArrExp.getAndCheckType(){
 		Type t = new IntArrType();
