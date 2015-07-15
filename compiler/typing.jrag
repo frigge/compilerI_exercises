@@ -149,9 +149,13 @@ aspect typing {
 			addError("Fehler in NewExp: Kann Klasse "+getKlasse().getIdent()+" nicht finden (Zeile "+getFirstLine()+")");
 			throw new IllegalStateException();
 		}
-		IdType t = new IdType(getFirstLine(),c.getIdent());
-		t.setParent(this);
-		return t;
+		try{
+			IdType t = new IdType(getFirstLine(),c.getIdent().clone());
+			t.setParent(this);
+			return t;
+		} catch (CloneNotSupportedException e){
+			throw new UnsupportedOperationException(e);
+		}
 	}
 	public Type NotExp.getAndCheckType(){
 		Type wert = getWert().getAndCheckType();

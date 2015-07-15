@@ -71,15 +71,18 @@ aspect typeComp {
 			return superType == null ? null : superType.getType();
 		}
 		
-		public boolean instanceOf(Type a, Type b){
+		public boolean instanceOf(IdType a, IdType b){
+			addElement(a.getIdent(),a.lookup());
 			TreeElem ae = treeMap.get(a);
 			TreeElem be = treeMap.get(b);
 			
-			while(ae != null){
-				if(ae.getType() == be.getType()){
-					return true;
-				} else {
-					ae = ae.getSupertype();
+			if(be != null){
+				while(ae != null){
+					if(ae.getType() == be.getType()){
+						return true;
+					} else {
+						ae = ae.getSupertype();
+					}
 				}
 			}
 			return false;
@@ -146,6 +149,9 @@ aspect typeComp {
 		return t instanceof IntType;
 	}
 	public boolean IdType.instanceOf(Type t) {
-		return tree().instanceOf(this,t);
+	  if(t instanceof IdType)
+		return tree().instanceOf(this,(IdType) t);
+	  else
+		  return false;
 	}
 }

@@ -136,5 +136,23 @@ public class TypeTest {
 		Program p = buildTest(new File("tests/JUnitTestCases/type_methodeParameterVererbungError.txt"));
 		assertEquals(1, p.error().size());
 	}
+	
+	@Test
+	public void testMethodeUneindeutig() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_methodeUneindeutig.txt"));
+		assertEquals(1, p.error().size());
+	}
+	
+	@Test
+	public void testConstructor() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_constructor.txt"));
+		assertEquals(0, p.error().size());
+	}
+	
+	@Test
+	public void testConstructorError() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_constructorError.txt"));
+		assertEquals(1, p.error().size());
+	}
 
 }
