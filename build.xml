@@ -16,20 +16,20 @@
 
   <target name="scanner">
     <mkdir dir="${gen.dir}/${package}"/>
-    <jflex file="${grammar.dir}/MJScanner.flex" outdir="${gen.dir}/${package}" nobak="true" />
+    <jflex file="${grammar.dir}/parser/MJScanner.flex" outdir="${gen.dir}/${package}" nobak="true" />
   </target>
 
   <target name="parser">
     <mkdir dir="${gen.dir}/${package}"/>
-    <beaver file="${grammar.dir}/MJParser.beaver" destdir="${gen.dir}/${package}" terminalNames="yes" compress="no" useSwitch="yes" reportActions="yes" />
+    <beaver file="${grammar.dir}/parser/MJParser.beaver" destdir="${gen.dir}/${package}" terminalNames="yes" compress="no" useSwitch="yes" reportActions="yes" />
   </target>
 
   <target name="jastadd">
     <mkdir dir="${gen.dir}"/>
     <jastadd package="${package}" grammar="${grammar.dir}" outdir="${gen.dir}" beaver="true" debug="true">
         <fileset dir=".">
-          <include name="${grammar.dir}/*.ast"/>
-          <include name="${grammar.dir}/*.jrag"/>
+          <include name="${grammar.dir}/parser/*.ast"/>
+		  <include name="${grammar.dir}/checking/*.jrag"/>
           <include name="${grammar.dir}/*.jadd"/>
         </fileset>
       </jastadd>

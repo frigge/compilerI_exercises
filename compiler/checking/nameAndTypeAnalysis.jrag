@@ -1,0 +1,138 @@
+aspect checking {
+	public void Program.check() {
+    	this.buildLookup();
+    	this.buildMethodLookup();
+    	this.typeAndLocalNameAnalysis();
+	}
+	
+	public void Program.typeAndLocalNameAnalysis(){
+		getMain().typeAndLocalNameAnalysis();
+    	for (ClassDecl cd : getDeclss()) 
+    		cd.typeAndLocalNameAnalysis();
+	}
+	
+	public abstract void Decl.typeAndLocalNameAnalysis();
+  	public void MainClass.typeAndLocalNameAnalysis() {
+  		localLookup().openScp();
+		for (VarDecl v : getVariabless()){
+			v.typeAndLocalNameAnalysis();
+			addError(localLookup().enter(v));
+		}
+		for (Statement s : getStatementss()) 
+			s.typeAndLocalNameAnalysis();
+  		localLookup().closeScp();
+	}
+  	public void ClassDecl.typeAndLocalNameAnalysis() {
+	  	localLookup().openClass(this);
+		for (VarDecl v : getVariabless()) {
+			v.typeAndLocalNameAnalysis();
+			addError(localLookup().enter(v));
+		}
+		for (MethodDecl m : getMethodss()) 
+			m.typeAndLocalNameAnalysis();
+	  	localLookup().closeClass();
+  	}
+
+	public void MethodDecl.typeAndLocalNameAnalysis() {
+	  	localLookup().openScp();
+	  	
+		Type retType = getT();
+		if(retType instanceof IdType){
+			ClassDecl c = lookup().lookupClass(retType);
+			if(c == null){
+				addError("Kann Return-Typen "+retType.typeValue()+" nicht identifizieren (Zeile "+getFirstLine()+")");
+			}			
+		}
+		for (VarDecl v : getParamss()) {
+			v.typeAndLocalNameAnalysis();
+			addError(localLookup().enter(v));
+		}
+		for (VarDecl v : getVarss()) {
+			v.typeAndLocalNameAnalysis();
+			addError(localLookup().enter(v));
+		}
+	    for (Statement s : getStatementss()) 
+	    	s.typeAndLocalNameAnalysis();
+		Type returnType = getReturnExp().getAndCheckType();
+		if(!returnType.equals(getT())) addError("Return Type passt nicht zum definierten Typ (Zeile "+getFirstLine()+")");
+	  	localLookup().closeScp();
+	}
+  
+	public void VarDecl.typeAndLocalNameAnalysis() {
+		Type varType = getT();
+		if(varType instanceof IdType){
+			ClassDecl c = lookup().lookupClass(varType);
+			if(c == null){
+				addError("Kann Typen "+varType.typeValue()+" nicht identifizieren (Zeile "+getFirstLine()+")");
+			}			
+		}
+	}
+	
+  public abstract void Statement.typeAndLocalNameAnalysis();
+  public void StmList.typeAndLocalNameAnalysis() {
+    for (Statement s : getStatementss()) 
+    	s.typeAndLocalNameAnalysis();
+  }
+  public void Zuweisung.typeAndLocalNameAnalysis() {
+  	try{
+	    VarDecl v = localLookup().lookup(getIdent());
+		if(v == null) {
+			addError("Kann keine Variablendeklaration zu "+ getIdent().getIdent()+" finden (Zeile "+getFirstLine()+")");
+			return;
+		}
+		Type r = getExp().getAndCheckType();
+		if(!(r.instanceOf(v.getT()))){
+			addError("Kann der Variable "+getIdent().getIdent()+" keinen Wert vom Typen "+r.typeValue()+" zuweisen (Zeile "+getFirstLine()+")");
+		}
+	} catch (IllegalStateException e){};
+  }
+  public void ArrZuw.typeAndLocalNameAnalysis() {
+  	try{
+	    VarDecl v = localLookup().lookup(getIdent());
+		if(v == null) {
+			addError("Kann keine Variablendeklaration zu "+ getIdent().getIdent()+" finden (Zeile "+getFirstLine()+")");
+			return;
+		}
+		if(!(v.getT() instanceof IntArrType)){
+			addError("Bei "+ getIdent().getIdent()+" handelt es sich nicht um ein Array (Zeile "+getFirstLine()+")");
+		}
+		Type posType = getPos().getAndCheckType();
+		if(!(posType instanceof IntType)){
+			addError("Die Stellenangabe des Arrays "+ getIdent().getIdent()+" ist kein int (Zeile "+getFirstLine()+")");
+		}
+		Type valueType = getValue().getAndCheckType();
+		if(!(valueType instanceof IntType)){
+			addError("Der Ausdruck "+ getValue().toString() +" ist kein int (Zeile "+getFirstLine()+")");
+			
+		}
+	} catch (IllegalStateException e){};
+  }
+  public void IfThenElse.typeAndLocalNameAnalysis() {
+	try{
+	    Type ifType = getIf().getAndCheckType();
+	    if(!(ifType instanceof BooleanType)){
+			addError("Der Ausdruck "+ getIf().toString() +" ist kein boolean (Zeile "+getFirstLine()+")");
+	    }
+	    getThen().typeAndLocalNameAnalysis();
+	    getElse().typeAndLocalNameAnalysis();
+	} catch (IllegalStateException e){};
+  }
+  public void While.typeAndLocalNameAnalysis() {
+  	try{
+	    Type bedingungType = getBedingung().getAndCheckType();
+	    if(!(bedingungType instanceof BooleanType)){
+			addError("Der Ausdruck "+ getBedingung().toString() +" ist kein boolean (Zeile "+getFirstLine()+")");
+	    }
+	    getStatement().typeAndLocalNameAnalysis();
+	} catch (IllegalStateException e){};
+  }
+  public void Syso.typeAndLocalNameAnalysis() {
+  	try{
+	    Type expType = getExp().getAndCheckType();
+	    if(!(expType instanceof IntType)){
+			addError("Ich kann leider nur ints printen :( (Zeile "+getFirstLine()+")");
+	    }
+	} catch (IllegalStateException e){};
+  }
+  
+}

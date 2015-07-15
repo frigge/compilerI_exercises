@@ -1,0 +1,157 @@
+aspect typeComp {
+
+	syn lazy TypeTree Program.tree() {
+		return new TypeTree();
+	}
+  	eq Program.getMain().tree() = this.tree();
+	eq Program.getDecls().tree() = this.tree();
+	
+	inh lazy TypeTree Decl.tree();
+	inh lazy TypeTree Type.tree();
+	inh lazy TypeTree Statement.tree();
+	inh lazy TypeTree Exp.tree();
+
+	public int Type.hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((typeValue() == null) ? 0 : typeValue().hashCode());
+		return result;
+	}
+
+	public boolean Type.equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Type other = (Type) obj;
+		if (typeValue() == null) {
+			if (other.typeValue() != null)
+				return false;
+		} else if (!typeValue().equals(other.typeValue()))
+			return false;
+		return true;
+	}
+	
+	public class TypeTree {
+		private java.util.Map<Type,TreeElem> treeMap = new java.util.HashMap<Type,TreeElem>();
+		
+		public CompilationError addElement(Id i, Lookup l){
+			try {
+				Type newType = new IdType(i.getFirstLine(),i.clone());
+				newType.setParent(i.getParent());
+				if(!treeMap.containsKey(newType)){
+					ClassDecl c = l.lookupClass(i.getIdent());
+					if(c == null){
+						return new CompilationError("Kann Klasse zum Typen "+i.getIdent()+" nicht finden (Zeile "+i.getFirstLine()+")");
+					}
+					TreeElem element = new TreeElem(c);
+					if(c.getExtends() != null){
+						CompilationError e = addElement(c.getExtends(),l);
+						try{
+							Type t = new IdType(c.getFirstLine(),c.getExtends().clone());
+							t.setParent(i.getParent());
+							element.setSuperType(treeMap.get(t));
+						} catch (CloneNotSupportedException e2){
+							throw new UnsupportedOperationException(e2);
+						}
+					}
+					treeMap.put(newType,element); 
+				}
+				return null;
+			} catch (CloneNotSupportedException e1) {
+				throw new UnsupportedOperationException(e1);
+			}
+		}
+		
+		public ClassDecl supertypeOf(Type a){
+			TreeElem t = treeMap.get(a);
+			TreeElem superType = treeMap.get(a).getSupertype();
+			return superType == null ? null : superType.getType();
+		}
+		
+		public boolean instanceOf(IdType a, IdType b){
+			addElement(a.getIdent(),a.lookup());
+			TreeElem ae = treeMap.get(a);
+			TreeElem be = treeMap.get(b);
+			
+			if(be != null){
+				while(ae != null){
+					if(ae.getType() == be.getType()){
+						return true;
+					} else {
+						ae = ae.getSupertype();
+					}
+				}
+			}
+			return false;
+		}
+		
+		private class TreeElem {
+			private ClassDecl node;
+			private TreeElem superType = null;
+			
+			public TreeElem(ClassDecl node){
+				this.node = node;
+			}
+			
+			public void setSuperType(TreeElem superType){
+				this.superType = superType;
+			}
+			
+			public ClassDecl getType(){
+				return node;
+			}
+			
+			public TreeElem getSupertype(){
+				return superType;
+			}
+		}
+	}
+	
+	
+	public abstract Type Type.supertype();
+	public Type IntArrType.supertype() {
+		return null;
+	}
+	public Type BooleanType.supertype() {
+		return null;
+	}
+	public Type IntType.supertype() {
+		return null;
+	}
+	public Type IdType.supertype() {
+		CompilationError error = tree().addElement(getIdent(),lookup());
+		addError(error);
+		ClassDecl c = tree().supertypeOf(this);
+		if(c== null){
+			return null;
+		} else {
+			try{
+				Type supertype = new IdType(c.getFirstLine(),c.getIdent().clone());
+				supertype.setParent(this);
+				return supertype;
+			} catch (CloneNotSupportedException e){
+				throw new UnsupportedOperationException(e);
+			}
+		}
+	}
+	
+	public abstract boolean Type.instanceOf(Type t);
+	public boolean IntArrType.instanceOf(Type t) {
+		return t instanceof IntArrType;
+	}
+	public boolean BooleanType.instanceOf(Type t) {
+		return t instanceof BooleanType;
+	}
+	public boolean IntType.instanceOf(Type t) {
+		return t instanceof IntType;
+	}
+	public boolean IdType.instanceOf(Type t) {
+	  if(t instanceof IdType)
+		return tree().instanceOf(this,(IdType) t);
+	  else
+		  return false;
+	}
+}

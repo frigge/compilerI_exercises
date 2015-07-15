@@ -1,0 +1,3 @@
+class FehlerSammlung{
+	MissingType b;
+}

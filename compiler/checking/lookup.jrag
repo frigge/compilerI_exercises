@@ -1,0 +1,49 @@
+aspect lookup {
+	
+	syn lazy Lookup Program.lookup() {
+		return new Lookup();
+	}
+	syn lazy LocalLookup Program.localLookup() {
+		return new LocalLookup();
+	}
+  	eq Program.getMain().lookup() = this.lookup();
+	eq Program.getDecls().lookup() = this.lookup();
+  	eq Program.getMain().localLookup() = this.localLookup();
+	eq Program.getDecls().localLookup() = this.localLookup();
+	
+	inh lazy Lookup Decl.lookup();
+	inh lazy Lookup Type.lookup();
+	inh lazy Lookup Statement.lookup();
+	inh lazy Lookup Exp.lookup();
+	inh lazy LocalLookup Decl.localLookup();
+	inh lazy LocalLookup Type.localLookup();
+	inh lazy LocalLookup Statement.localLookup();
+	inh lazy LocalLookup Exp.localLookup();
+	
+	
+	public void Program.buildLookup() {
+    	getMain().buildLookup();
+    	for (ClassDecl cd : getDeclss()) cd.buildLookup();
+	}
+	
+	public void MainClass.buildLookup() {
+		addError(lookup().enter(this));
+	}
+	public void ClassDecl.buildLookup() {
+		addError(lookup().enter(this));
+	}
+  	
+  	
+	public void Program.buildMethodLookup() {
+    	for (ClassDecl cd : getDeclss()) cd.buildMethodLookup();
+	}
+	
+	public void ClassDecl.buildMethodLookup() {
+		lookup().incNL(this);
+		for (MethodDecl m : getMethodss()) m.buildMethodLookup();
+		lookup().decNL();
+	}
+  	public void MethodDecl.buildMethodLookup() {
+		addError(lookup().enter(this));
+  	}
+}

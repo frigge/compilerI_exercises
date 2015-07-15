@@ -1,0 +1,9 @@
+class FehlerSammlung{
+	int x;
+	
+	public int fehlerhaftesWhile(){
+		while(x)
+			System.out.println(x);
+		return 0;
+	}
+}

@@ -1,0 +1,463 @@
+// Sie m�ssen ggf. diese Datei an ihre minijava.ast anpassen
+
+aspect PrettyPrint {
+  public class PrettyPrinter {
+    public static String INDENT = "  ";
+  	private StringBuilder sb;
+  	public PrettyPrinter(){
+  		sb = new StringBuilder();
+  	}
+  
+    public void append(String s) {
+       sb.append(s);
+    }
+    
+    public String getString() {
+       return sb.toString();
+    }
+}
+
+  //similar to JastAdd Java compiler	
+  syn String ASTNode.indent() {
+        String indent = extractIndent();
+        return indent.startsWith("\n") ? indent : ("\n" + indent);
+  }
+
+  syn String ASTNode.extractIndent() {
+  	  if(getParent() == null)
+   		   return "";
+      String indent = getParent().extractIndent();
+      if(getParent().addsIndentationLevel())
+      	indent += PrettyPrinter.INDENT;
+      return indent;
+  }
+
+  syn boolean ASTNode.addsIndentationLevel() = false;
+  eq Program.addsIndentationLevel() = true;
+  eq MainClass.addsIndentationLevel() = true;
+  eq ClassDecl.addsIndentationLevel() = true;
+  eq MethodDecl.addsIndentationLevel() = true;
+  eq Statement.addsIndentationLevel() = true;
+  eq StmList.addsIndentationLevel() = true;
+
+  syn lazy PrettyPrinter Program.printer() {
+  	return new PrettyPrinter();
+  }
+  eq Program.getMain().printer() = this.printer();
+  eq Program.getDecls().printer() = this.printer();
+  eq Decl.getIdent().printer() = this.printer();
+  
+  inh lazy PrettyPrinter Decl.printer();
+  inh lazy PrettyPrinter Statement.printer();
+  inh lazy PrettyPrinter Exp.printer();
+  inh lazy PrettyPrinter Type.printer();
+  inh lazy PrettyPrinter Op.printer();
+  inh lazy PrettyPrinter Id.printer();
+  
+  syn PrettyPrinter Program.print() {
+    getMain().print();
+    for (ClassDecl cd : getDeclss()) cd.print();
+    return printer();
+  }
+  
+  public abstract void Decl.print();
+  public void MainClass.print() {
+    printer().append("class ");
+    getIdent().print();
+    printer().append(" {");
+  	printer().append(indent() + "public static void main (String[] ");
+  	getParamName().print();
+  	printer().append(") {");
+	for (VarDecl v : getVariabless()) {
+	  printer().append(indent() + PrettyPrinter.INDENT);  
+      v.print();
+      printer().append(";\n");
+    }
+	for (Statement s : getStatementss()) s.print();
+  	printer().append(indent() + "}");
+  	printer().append("\n}\n");
+  }
+  public void ClassDecl.print() {
+    printer().append("class ");
+    getIdent().print();
+    if(getExtends() != null){
+    	printer().append(" extends ");
+    	getExtends().print();
+    }    	
+	printer().append(" {");
+   	for (VarDecl f : getVariabless()) {
+	  printer().append(indent() + PrettyPrinter.INDENT);  
+      f.print();
+      printer().append(";\n");
+    }
+	for (MethodDecl m : getMethodss()) m.print();
+    printer().append("\n}\n");	
+  }
+
+  public void MethodDecl.print() {
+  	printer().append(indent() + "public ");
+  	getT().print();
+  	printer().append(" ");
+  	getIdent().print();
+  	printer().append("(");
+  	if (getNumParams() > 0) {
+  	  getParams(0).print();
+  	  for (int i = 1; i < getNumParams(); i++) {
+  	    printer().append(", ");
+  	    getParams(i).print();
+  	  }
+  	} 
+  	printer().append(") {");
+  		for (VarDecl v : getVarss()) {
+	  printer().append(indent() + PrettyPrinter.INDENT);  
+      v.print();
+      printer().append(";\n");
+    }
+    for (Statement s : getStatementss()) s.print();
+	printer().append(indent() + PrettyPrinter.INDENT + "return ");
+	getReturnExp().print();
+	printer().append(";");
+  	printer().append(indent() + "}\n");
+  }
+
+  public void VarDecl.print() {
+	getT().print();
+  	printer().append(" ");
+  	getIdent().print();
+  }
+  
+  public abstract void Type.print();
+  public void IntArrType.print() {
+    printer().append("int[]");
+  }
+  public void BooleanType.print() {
+    printer().append("boolean");
+  }
+  public void IntType.print() {
+    printer().append("int");
+  }
+  public void IdType.print() {
+    getIdent().print();
+  }
+  
+  public abstract void Statement.print();
+  public void StmList.print() {
+    printer().append(indent() + "{");
+    for (Statement s : getStatementss()) s.print();
+    printer().append(indent() + "}");
+  }
+  public void Zuweisung.print() {
+    printer().append(indent());
+    getIdent().print();
+    printer().append(" = ");
+    getExp().print();
+    printer().append(";");
+  }
+  public void ArrZuw.print() {
+    printer().append(indent());
+    getIdent().print();
+    printer().append("[");
+    getPos().print();
+    printer().append("] = "); 
+    getValue().print();
+    printer().append(";");
+  }
+  public void IfThenElse.print() {
+    printer().append(indent() + "if (");
+    getIf().print();
+    printer().append(")");
+    getThen().print();
+    printer().append(indent() + "else ");
+    getElse().print();
+  }
+  public void While.print() {
+    printer().append(indent() + " while (");
+    getBedingung().print();
+    printer().append(")");
+    getStatement().print();
+  }
+  public void Syso.print() {
+    printer().append(indent() + "System.out.println(");
+    getExp().print();
+    printer().append(");");
+  }
+
+  abstract void Exp.print();
+  public void BinOpExp.print(){
+  	printer().append("(");
+    getL().print();
+    printer().append(" ");
+    getO().print();
+    printer().append(" ");
+    getR().print();
+    printer().append(")");
+  }
+  public void NotExp.print() {
+    printer().append("!(");
+    getWert().print();
+    printer().append(")");
+  }
+  public void Geklammert.print() {
+    printer().append("(");
+    getExpression().print();
+    printer().append(")");
+  }
+  public void IdExp.print() {
+    getName().print();
+  }  
+  public void IntArrExp.print() {
+    printer().append("new int[");
+    getGroesse().print();
+    printer().append("]");
+  }  
+  public void NewExp.print() {
+    printer().append("new ");
+    getKlasse().print();
+    printer().append("()");
+  }  
+  public void ArrayExp.print() {
+    getFeld().print();
+    printer().append("[");
+    getPosition().print();
+    printer().append("]");
+  }  
+  public void LengthExp.print() {
+    getFeld().print();
+    printer().append(".length");
+  }  
+  public void MethodExp.print() {
+    getFeld().print();
+    printer().append(".");
+    getMethod().print();
+    printer().append("(");
+    if (getNumParameter() > 0) {
+  	  getParameter(0).print();
+  	  for (int i = 1; i < getNumParameter(); i++) {
+  	    printer().append(", ");
+  	    getParameter(i).print();
+  	  }
+  	} 
+    printer().append(")");
+  }  
+  public void IntLit.print() {
+  	printer().append(getWert().toString());
+  } 
+  public void TrueExp.print() {
+  	printer().append("true");
+  }
+  public void FalseExp.print() {
+  	printer().append("false");
+  }
+  public void ThisExp.print() {
+  	printer().append("this");
+  }
+  
+  public void Id.print(){
+  	printer().append(getIdent());
+  }
+  
+  abstract void Op.print();
+  public void And.print(){
+  	printer().append("&&");
+  }
+  public void Plus.print(){
+  	printer().append("+");
+  }
+  public void Minus.print(){
+  	printer().append("-");
+  } 
+  public void Mul.print(){
+  	printer().append("*");
+  }
+  public void Less.print(){
+  	printer().append("<");
+  }
+  
+  public String Program.toString() {
+  	StringBuilder b = new StringBuilder();
+    b.append(getMain().toString());
+    for (ClassDecl cd : getDeclss()) b.append(cd.toString());
+    return b.toString();
+  }
+  
+  public String MainClass.toString() {
+  	StringBuilder b = new StringBuilder();
+    b.append("class ");
+    b.append(getIdent().toString());
+    b.append(" {");
+  	b.append(indent() + "public static void main (String[] ");
+  	b.append(getParamName().toString());
+  	b.append(") {");
+	for (VarDecl v : getVariabless()) {
+	  b.append(indent() + PrettyPrinter.INDENT);  
+      b.append(v.toString());
+      b.append(";\n");
+    }
+	for (Statement s : getStatementss()) b.append(s.toString());
+  	b.append(indent() + "}");
+  	b.append("\n}\n");
+  	return b.toString();
+  }
+  public String ClassDecl.toString() {
+  	StringBuilder b = new StringBuilder();
+    b.append("class ");
+    b.append(getIdent().toString());
+    if(getExtends() != null){
+    	b.append(" extends ");
+    	b.append(getExtends().toString());
+    }    	
+	b.append(" {");
+   	for (VarDecl f : getVariabless()) {
+      b.append(f.toString());
+      b.append(";\n");
+    }
+	for (MethodDecl m : getMethodss()) b.append(m.toString());
+    b.append("\n}\n");
+    return b.toString();	
+  }
+
+  public String MethodDecl.toString() {
+  	StringBuilder b = new StringBuilder();
+  	b.append(indent() + "public ");
+  	b.append(getT().toString());
+  	b.append(" ");
+  	b.append(getIdent().toString());
+  	b.append("(");
+  	if (getNumParams() > 0) {
+  	  b.append(getParams(0).toString());
+  	  for (int i = 1; i < getNumParams(); i++) {
+  	    b.append(", ");
+  	    b.append(getParams(i).toString());
+  	  }
+  	} 
+  	b.append(") {");
+  	for (VarDecl v : getVarss()) {
+	  b.append(indent() + PrettyPrinter.INDENT);  
+      b.append(v.toString());
+      b.append(";\n");
+    }
+    for (Statement s : getStatementss()) b.append(s.toString());
+	b.append(indent() + PrettyPrinter.INDENT + "return ");
+	b.append(getReturnExp().toString());
+	b.append(";");
+  	b.append(indent() + "}\n");
+  	return b.toString();
+  }
+
+  public String VarDecl.toString() {
+  	StringBuilder b = new StringBuilder();
+	b.append(getT().toString());
+  	b.append(" ");
+  	b.append(getIdent().toString());
+  	return b.toString();
+  }
+  
+  public String IntArrType.toString() {
+    return "int[]";
+  }
+  public String BooleanType.toString() {
+    return "boolean";
+  }
+  public String IntType.toString() {
+    return "int";
+  }
+  public String IdType.toString() {
+    return getIdent().toString();
+  }
+  
+  public String StmList.toString() {
+  	StringBuilder b = new StringBuilder();
+    b.append(indent() + "{");
+    for (Statement s : getStatementss()) b.append(s.toString());
+    b.append(indent() + "}");
+  	return b.toString();
+  }
+  public String Zuweisung.toString() {
+    return getIdent().toString() + " = "+ getExp().toString() +";";
+  }
+  public String ArrZuw.toString() {
+  	return getIdent().toString()+"["+getPos().toString()+"] =" +getValue().toString()+";";
+  }
+  public String IfThenElse.toString() {
+    return "if (" + getIf().toString()+")"+getThen().toString()+" else "+getElse().toString();
+  }
+  public String While.toString() {
+    return "while ("+getBedingung().toString()+")"+getStatement().toString();
+  }
+  public String Syso.toString() {
+    return "System.out.println("+getExp().toString()+");";
+  }
+
+  public String BinOpExp.toString(){
+  	return getL().toString() + " "+getO().toString()+" "+ getR().toString();
+  }
+  public String NotExp.toString() {
+  	return "!(" + getWert().toString() +")";
+  }
+  public String Geklammert.toString() {
+  	return "(" + getExpression().toString() + ")";
+  }
+  public String IdExp.toString() {
+    return getName().toString();
+  }  
+  public String IntArrExp.toString() {
+    return "new int[" + getGroesse().toString() + "]";
+  }  
+  public String NewExp.toString() {
+  	return "new " + getKlasse().toString() + "()";
+  }  
+  public String ArrayExp.toString() {
+  	return getFeld().toString() + "[" + getPosition().toString() + "]";
+  }  
+  public String LengthExp.toString() {
+  	return getFeld().toString() + ".length";
+  }  
+  public String MethodExp.toString() {
+  	StringBuilder b = new StringBuilder();
+    b.append(getFeld().toString());
+    b.append(".");
+    b.append(getMethod().toString());
+    b.append("(");
+    if (getNumParameter() > 0) {
+  	  b.append(getParameter(0).toString());
+  	  for (int i = 1; i < getNumParameter(); i++) {
+  	    b.append(", ");
+  	    b.append(getParameter(i).toString());
+  	  }
+  	} 
+    b.append(")");
+    return b.toString();
+  }  
+  public String IntLit.toString() {
+  	return getWert().toString();
+  } 
+  public String TrueExp.toString() {
+  	return "true";
+  }
+  public String FalseExp.toString() {
+  	return "false";
+  }
+  public String ThisExp.toString() {
+  	return "this";
+  }
+  
+  public String Id.toString(){
+  	return getIdent();
+  }
+  
+  public String And.toString(){
+  	return "&&";
+  }
+  public String Plus.toString(){
+  	return "+";
+  }
+  public String Minus.toString(){
+  	return "-";
+  } 
+  public String Mul.toString(){
+  	return "*";
+  }
+  public String Less.toString(){
+  	return "<";
+  }
+}

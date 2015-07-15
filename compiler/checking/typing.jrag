@@ -1,0 +1,176 @@
+aspect typing {
+	public abstract String Type.typeValue();	
+	public String IntArrType.typeValue() {
+		return "int[]";
+		
+	}
+	public String BooleanType.typeValue() {
+		return "boolean";
+	}
+	public String IntType.typeValue() {
+		return "int";
+	}
+	public String IdType.typeValue() {
+		return getIdent().getIdent();
+	}
+	
+	public abstract Type Op.requiredType();
+	public abstract Type Op.result();
+	public Type And.requiredType(){
+		return new BooleanType();
+	}
+	public Type And.result(){
+		return new BooleanType();
+	}
+	public Type Plus.requiredType(){
+		return new IntType();
+	}
+	public Type Plus.result(){
+		return new IntType();
+	}
+	public Type Minus.requiredType(){
+		return new IntType();
+	}
+	public Type Minus.result(){
+		return new IntType();
+	}
+	public Type Mul.requiredType(){
+		return new IntType();
+	}
+	public Type Mul.result(){
+		return new IntType();
+	}
+	public Type Less.requiredType(){
+		return new IntType();
+	}
+	public Type Less.result(){
+		return new BooleanType();
+	}
+	
+	public abstract Type Exp.getAndCheckType();
+	public Type BinOpExp.getAndCheckType(){
+		Type required = getO().requiredType();
+		Type result = getO().result();
+		Type l = getL().getAndCheckType();
+		Type r = getR().getAndCheckType();
+		result.setParent(this);
+		if(!(l.equals(required) && r.equals(required))){
+			addError("Fehler in BinOpExp in Zeile "+getFirstLine());	
+		}
+		return result;
+	}
+	public Type ArrayExp.getAndCheckType(){
+		Type feld = getFeld().getAndCheckType();
+		Type position = getPosition().getAndCheckType();
+		if(!(feld instanceof IntArrType && position instanceof IntType)){
+			addError("Fehler in ArrayExp (Feld ist kein Array oder die Position kein int) in Zeile "+getFirstLine());	
+		}
+		Type t = new IntType();
+		t.setParent(this);
+		return t;
+	}
+	public Type LengthExp.getAndCheckType(){
+		Type feld = getFeld().getAndCheckType();
+		if(!(feld instanceof IntArrType)){
+			addError("Fehler in LengthExp (Exp ist kein Array) in Zeile "+getFirstLine());	
+		}
+		Type t = new IntType();
+		t.setParent(this);
+		return t;
+	}
+	public Type MethodExp.getAndCheckType(){
+		//TODO		
+		Type feld = getFeld().getAndCheckType();
+		List<Exp> parameterExp = getParameters();
+		List<Type> parameter = new List<Type>();
+		parameter.setParent(this);
+		for(Exp e: parameterExp){
+			try{
+			parameter.add(e.getAndCheckType().clone());
+			} catch (CloneNotSupportedException error) {
+				throw new UnsupportedOperationException("Do not know why unsupported :(", error);
+			}
+		}
+		ClassDecl klass = lookup().lookupClass(feld);
+		if(klass == null){
+			addError("Fehler in MethodExp: Kann Klasse vom typ "+feld.typeValue()+" nicht finden (Zeile "+getFirstLine()+")");
+			throw new IllegalStateException();
+		}
+		
+		MethodDecl m = (MethodDecl) lookup().lookupMethod(klass,getMethod().getIdent(),parameter);
+		if(m == null){
+			addError("Fehler in MethodExp: Kann keinen passenden Methodenaufruf finden (Zeile "+getFirstLine()+")");
+			throw new IllegalStateException();
+		}
+		return m.getT();
+	}
+	public Type TrueExp.getAndCheckType(){
+		Type t = new BooleanType();
+		t.setParent(this);
+		return t;
+	}
+	public Type FalseExp.getAndCheckType(){
+		Type t = new BooleanType();
+		t.setParent(this);
+		return t;
+	}
+	public Type IdExp.getAndCheckType(){
+		VarDecl v = localLookup().lookup(getName());
+		if(v == null){
+			addError("Fehler in IdExp: Feld "+getName()+" nicht deklariert (Zeile "+getFirstLine()+")");
+			throw new IllegalStateException();
+		
+		}
+		return v.getT();
+	}
+	public Type IntLit.getAndCheckType(){
+		Type t = new IntType();
+		t.setParent(this);
+		return t;
+	}
+	public Type ThisExp.getAndCheckType(){
+		ClassDecl klass = localLookup().getClassDecl();
+		if(klass == null){
+			addError("Fehler in ThisExp: Kein ausführendes Objekt bekannt (Zeile "+getFirstLine()+")");
+			throw new IllegalStateException();
+		}
+		try{
+			IdType t = new IdType(getFirstLine(),klass.getIdent().clone());
+			t.setParent(this);
+			return t;
+		} catch (CloneNotSupportedException e){
+			throw new UnsupportedOperationException(e);
+		}
+	}
+	public Type IntArrExp.getAndCheckType(){
+		Type t = new IntArrType();
+		t.setParent(this);
+		return t;
+	}
+	public Type NewExp.getAndCheckType(){
+		ClassDecl c = lookup().lookupClass(getKlasse().getIdent());
+		if(c == null){
+			addError("Fehler in NewExp: Kann Klasse "+getKlasse().getIdent()+" nicht finden (Zeile "+getFirstLine()+")");
+			throw new IllegalStateException();
+		}
+		try{
+			IdType t = new IdType(getFirstLine(),c.getIdent().clone());
+			t.setParent(this);
+			return t;
+		} catch (CloneNotSupportedException e){
+			throw new UnsupportedOperationException(e);
+		}
+	}
+	public Type NotExp.getAndCheckType(){
+		Type wert = getWert().getAndCheckType();
+		if(!(wert instanceof BooleanType)){
+			addError("Fehler in NotExp: Expression nicht boolsch (Zeile "+getFirstLine()+")");
+		}
+		Type t = new BooleanType();
+		t.setParent(this);
+		return t;
+	}
+	public Type Geklammert.getAndCheckType(){
+		return getExpression().getAndCheckType();
+	}
+}

@@ -1,0 +1,226 @@
+aspect lookupTable{
+	public class Lookup {
+		private java.util.Map<LookupIdentification, Decl> lookupTable;
+		private ClassDecl nesting;
+		
+		public Lookup(){
+			lookupTable =  new java.util.HashMap<LookupIdentification, Decl>();
+		}
+		
+		public void incNL(ClassDecl nesting){
+			this.nesting = nesting;
+		}
+		
+		public void decNL(){
+			this.nesting = null;
+		}
+		
+		public CompilationError enter(Decl decl){
+			LookupIdentification li = LookupIdentification.liFactory(nesting,decl);
+			CompilationError result = null;
+			if(lookupTable.get(li) == null){
+				lookupTable.put(li, decl);
+			} else {
+				result = new CompilationError(li.getName()+" in line " +decl.getFirstLine()+ " does already exist");
+			}
+			return result;
+		}
+		
+		public ClassDecl lookupClass(String name){
+			return (ClassDecl) lookupTable.get(new ClassLookupIdentification(name));
+		}
+		public ClassDecl lookupClass(Type t){
+			return lookupClass(t.typeValue());
+		}
+		
+		public Decl lookupMethod(ClassDecl nesting, String name, List<Type> params){
+			try{
+				IdType t = new IdType(nesting.getFirstLine(), nesting.getIdent().clone());
+				t.setParent(nesting);
+				return lookupMethod(t,name,params);		
+			} catch (CloneNotSupportedException e){
+				throw new UnsupportedOperationException("",e);
+			}
+		}
+		
+		public Decl lookupMethod(Type nesting, String name, List<Type> params){
+			while(nesting != null){
+				MethodDecl d = (MethodDecl) lookupTable.get(new MethodLookupIdentification(lookupClass(nesting), name, params));
+				if(d != null){
+					List<VarDecl> foundParams = d.getParamss();
+					boolean allRight = true;
+					for (int i = 0; i < foundParams.numChildren() && allRight; i++) {
+						VarDecl v = foundParams.getChild(i);
+						Type foundParameter = v.getT();
+						Type givenParam = params.getChild(i);
+						if(!givenParam.instanceOf(foundParameter)){
+							allRight = false;
+						}
+					}
+					if(allRight){
+						return d;
+					}
+				} 
+				nesting = nesting.supertype();
+				
+			}
+			return null;		
+		}
+	}
+	
+	public abstract class LookupIdentification{
+		public static LookupIdentification liFactory(ClassDecl prefix, Decl decl){
+			if(decl instanceof ClassDecl || decl instanceof MainClass){
+				return new ClassLookupIdentification(decl);
+			} else if(decl instanceof MethodDecl){
+				return new MethodLookupIdentification(prefix,(MethodDecl) decl);
+			} else {
+				return null;
+			}
+		}
+		
+		public abstract String getName();
+	}
+	
+	public class ClassLookupIdentification extends LookupIdentification{
+		private String name;
+		
+		public ClassLookupIdentification(Decl decl){
+			name = CharConsts.getClassName(decl);
+		}
+		public ClassLookupIdentification(String name){
+			this.name = CharConsts.getClassName(name);
+		}
+		
+		@Override
+		public String getName(){
+			return name;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((name == null) ? 0 : name.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			ClassLookupIdentification other = (ClassLookupIdentification) obj;
+			if (name == null) {
+				if (other.name != null)
+					return false;
+			} else if (!name.equals(other.name))
+				return false;
+			return true;
+		}
+	}
+	
+	public class MethodLookupIdentification extends LookupIdentification{
+		java.util.List<Type> parameter;
+		String name;
+		ClassDecl nesting;
+		
+		public MethodLookupIdentification(ClassDecl nesting, MethodDecl decl){
+			this.nesting = nesting;
+			parameter = new java.util.ArrayList<Type>();
+			for(VarDecl p: decl.getParamss()){
+				parameter.add(p.getT());
+			}
+			this.name = CharConsts.getClassName(nesting) + CharConsts.ELEMENT_SEPERATOR + CharConsts.getMethodName(decl);
+		}
+		
+		public MethodLookupIdentification(ClassDecl nesting, String name, List<Type> params){
+			this.name = CharConsts.getClassName(nesting) + CharConsts.ELEMENT_SEPERATOR + CharConsts.getMethodName(name);
+			this.nesting = nesting;
+			parameter = new java.util.ArrayList();
+			for(Type t: params){
+				parameter.add(t);
+			}
+		}
+
+
+		@Override
+		public String getName(){
+			StringBuilder b = new StringBuilder();
+			b.append(name).append("(");
+			for(Type t: parameter){
+				b.append(t.typeValue()).append(",");
+			}
+			b.append(")");
+			return b.toString();
+		}
+		
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			for (Type type : parameter) {
+				while(type.supertype() != null){
+					type = type.supertype();
+				}
+				result = prime * result + type.typeValue().hashCode();
+			}
+			result = prime * result + ((name == null) ? 0 : name.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			MethodLookupIdentification other = (MethodLookupIdentification) obj;
+			if (name == null) {
+				if (other.name != null)
+					return false;
+			} else if (!name.equals(other.name))
+				return false;
+			if(parameter.size() != other.parameter.size())
+				return false;
+			if (nesting == null) {
+				if (other.nesting != null)
+					return false;
+			} else if (!nesting.equals(other.nesting))
+				return false;
+			boolean oInstanceOfT = false;
+			boolean tInstanceOfO = false;
+			boolean different = false;
+			for (int i = 0; i < parameter.size() && !different; i++) {
+				Type t = parameter.get(i);
+				Type o = parameter.get(i);
+				
+				if(!t.equals(o)){
+					if(t.instanceOf(o)){
+						tInstanceOfO = true;
+					} else if(o.instanceOf(t)){
+						oInstanceOfT = true;
+					} else {
+						different = true;
+					}
+				}
+			}
+			if(different){
+				return false;	//Eindeutig unterscheidbar
+			} else {
+				if(oInstanceOfT && tInstanceOfO){
+					return true;	//Nicht eindeutig unterscheidbar
+				} else if(oInstanceOfT || tInstanceOfO){
+					return false;	//Man kann immer die richtige auswählen
+				} else {
+					return true;	//Identisch
+				}
+			}
+		}
+	}
+}
