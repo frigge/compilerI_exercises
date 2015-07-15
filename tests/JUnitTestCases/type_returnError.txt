@@ -1,0 +1,6 @@
+class FehlerSammlung{
+	public int executeFunktioniert(){
+		boolean b;
+		return b;
+	}
+}

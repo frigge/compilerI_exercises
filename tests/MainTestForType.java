@@ -56,12 +56,26 @@ class FehlerSammlung{
 			System.out.println(x);
 		return 0;
 	}
+
+	public int executeFunktioniert(){
+		y = m.m1(x);
+		return 0;
+	}
+	
+	public int executeFunktioniertNicht(){
+		y = m.m1(a);
+		return 0;
+	}
 }
 
 class Integer{
 }
 
 class Methodensammlung{
+	
+	public int m1(int a){
+		return a;
+	}
 	
 }
 

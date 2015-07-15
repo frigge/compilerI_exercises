@@ -45,12 +45,24 @@ aspect lookupTable{
 		
 		public Decl lookupMethod(Type nesting, String name, List<Type> params){
 			while(nesting != null){
-				Decl d = lookupTable.get(new MethodLookupIdentification(lookupClass(nesting), name, params));	
+				MethodDecl d = (MethodDecl) lookupTable.get(new MethodLookupIdentification(lookupClass(nesting), name, params));
 				if(d != null){
-					return d;
-				} else {
-					nesting = nesting.supertype();
-				}
+					List<VarDecl> foundParams = d.getParamss();
+					boolean allRight = true;
+					for (int i = 0; i < foundParams.numChildren() && allRight; i++) {
+						VarDecl v = foundParams.getChild(i);
+						Type foundParameter = v.getT();
+						Type givenParam = params.getChild(i);
+						if(!givenParam.instanceOf(foundParameter)){
+							allRight = false;
+						}
+					}
+					if(allRight){
+						return d;
+					}
+				} 
+				nesting = nesting.supertype();
+				
 			}
 			return null;		
 		}

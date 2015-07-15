@@ -1,20 +1,10 @@
 package ex5;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 
-import minijava.MJParser;
-import minijava.MJScanner;
 import minijava.Program;
 
 import org.junit.Test;
@@ -22,51 +12,14 @@ import org.junit.Test;
 import beaver.Parser.Exception;
 
 public class TypeTest {
-	
-	private static String baseFile = "tests/BaseTestForType.java";
 
-	public Program buildTest(InputStream stream) throws IOException, Exception{
-		 MJParser parser = new MJParser();
-		 Program ast = (Program) parser.parse(new MJScanner(stream));
-		 ast.check();
-		 return ast;
-	}
-	
-	public Program buildTest(String codeToBeAppended) throws IOException, Exception{
-		PipedInputStream is = new PipedInputStream();
-		PipedOutputStream os = new PipedOutputStream(is);
-		
-		BufferedWriter w = new BufferedWriter(new OutputStreamWriter(os));
-		BufferedReader r = new BufferedReader(new FileReader(new File(baseFile)));
-		String line;
-		while((line = r.readLine()) != null){
-			w.append(line).append("\n");
-		}
-		if(codeToBeAppended != null){
-			w.append(codeToBeAppended);
-		}
-		w.flush();
-		os.close();
-		Program p = buildTest(is);
-		is.close();
-		return p;
-	}
-	
 	public Program buildTest(File appendCode) throws IOException, Exception{
-		BufferedReader r = new BufferedReader(new FileReader(appendCode));
-		StringBuilder b = new StringBuilder();
-		
-		String line;
-		while((line = r.readLine()) != null){
-			b.append(line).append("\n");
-		}
-		r.close();
-		return buildTest(b.toString());
+		return TestHelper.buildTest(appendCode);
 	}
 	
 	@Test
 	public void testBaseProgram() throws IOException, Exception {
-		Program p = buildTest("");
+		Program p = buildTest(null);
 		assertEquals(0, p.error().size());
 	}
 
@@ -74,6 +27,24 @@ public class TypeTest {
 	public void testNoError() throws IOException, Exception {
 		Program p = buildTest(new File("tests/JUnitTestCases/type_allRight.txt"));
 		assertEquals(0, p.error().size());
+	}
+
+	@Test
+	public void testSysoOk() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_sysoWorking.txt"));
+		assertEquals(0, p.error().size());
+	}
+
+	@Test
+	public void testSysoError() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_sysoError.txt"));
+		assertEquals(1, p.error().size());
+	}
+
+	@Test
+	public void testMissingType() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_missingType.txt"));
+		assertEquals(1, p.error().size());
 	}
 	
 	@Test
@@ -121,6 +92,48 @@ public class TypeTest {
 	@Test
 	public void testFalscherArrayZugriffArray() throws IOException, Exception {
 		Program p = buildTest(new File("tests/JUnitTestCases/type_arrayArray.txt"));
+		assertEquals(1, p.error().size());
+	}
+	
+	@Test
+	public void testGueltigerMethodenAufrufInt() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_methodeInt.txt"));
+		assertEquals(0, p.error().size());
+	}
+	
+	@Test
+	public void testUnGueltigerMethodenAufrufIntParam() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_methodeIntErrorParam.txt"));
+		assertEquals(1, p.error().size());
+	}
+	
+	@Test
+	public void testUnGueltigerMethodenAufrufIntWert() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_methodeIntErrorReturn.txt"));
+		assertEquals(1, p.error().size());
+	}
+	
+	@Test
+	public void testMethodenReturnError() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_returnError.txt"));
+		assertEquals(1, p.error().size());
+	}
+	
+	@Test
+	public void testMethodeVererbung() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_methodeVererbung.txt"));
+		assertEquals(0, p.error().size());
+	}
+	
+	@Test
+	public void testMethodeParameterVererbung() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_methodeParameterVererbung.txt"));
+		assertEquals(0, p.error().size());
+	}
+	
+	@Test
+	public void testMethodeParameterVererbungError() throws IOException, Exception {
+		Program p = buildTest(new File("tests/JUnitTestCases/type_methodeParameterVererbungError.txt"));
 		assertEquals(1, p.error().size());
 	}
 

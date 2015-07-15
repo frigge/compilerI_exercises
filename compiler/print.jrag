@@ -308,11 +308,10 @@ aspect PrettyPrint {
     }    	
 	b.append(" {");
    	for (VarDecl f : getVariabless()) {
-	  b.append(indent() + PrettyPrinter.INDENT);  
       b.append(f.toString());
       b.append(";\n");
     }
-	for (MethodDecl m : getMethodss()) b.append(b.toString());
+	for (MethodDecl m : getMethodss()) b.append(m.toString());
     b.append("\n}\n");
     return b.toString();	
   }

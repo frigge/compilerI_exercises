@@ -1,5 +1,16 @@
 aspect typeComp {
 
+	syn lazy TypeTree Program.tree() {
+		return new TypeTree();
+	}
+  	eq Program.getMain().tree() = this.tree();
+	eq Program.getDecls().tree() = this.tree();
+	
+	inh lazy TypeTree Decl.tree();
+	inh lazy TypeTree Type.tree();
+	inh lazy TypeTree Statement.tree();
+	inh lazy TypeTree Exp.tree();
+
 	public int Type.hashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -38,9 +49,13 @@ aspect typeComp {
 					TreeElem element = new TreeElem(c);
 					if(c.getExtends() != null){
 						CompilationError e = addElement(c.getExtends(),l);
-						Type t = new IdType(c.getFirstLine(),c.getExtends());
-						t.setParent(i.getParent());
-						element.setSuperType(treeMap.get(t));
+						try{
+							Type t = new IdType(c.getFirstLine(),c.getExtends().clone());
+							t.setParent(i.getParent());
+							element.setSuperType(treeMap.get(t));
+						} catch (CloneNotSupportedException e2){
+							throw new UnsupportedOperationException(e2);
+						}
 					}
 					treeMap.put(newType,element); 
 				}
@@ -93,14 +108,6 @@ aspect typeComp {
 	}
 	
 	
-	syn lazy TypeTree Type.tree() {
-		return new TypeTree();
-	}
-	
-	public void Program.computeTypes() {
-		
-	}
-	
 	public abstract Type Type.supertype();
 	public Type IntArrType.supertype() {
 		return null;
@@ -118,9 +125,13 @@ aspect typeComp {
 		if(c== null){
 			return null;
 		} else {
-			Type supertype = new IdType(c.getFirstLine(),c.getIdent());
-			supertype.setParent(this);
-			return supertype;
+			try{
+				Type supertype = new IdType(c.getFirstLine(),c.getIdent().clone());
+				supertype.setParent(this);
+				return supertype;
+			} catch (CloneNotSupportedException e){
+				throw new UnsupportedOperationException(e);
+			}
 		}
 	}
 	

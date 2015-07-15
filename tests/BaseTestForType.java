@@ -6,10 +6,6 @@ class MainTest{
 class Integer{
 }
 
-class Methodensammlung{
-	
-}
-
 class A1{
 }
 class A2 extends A1{

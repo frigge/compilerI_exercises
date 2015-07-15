@@ -1,7 +1,6 @@
 aspect checking {
 	public void Program.check() {
     	this.buildLookup();
-    	this.computeTypes();
     	this.buildMethodLookup();
     	this.typeAndLocalNameAnalysis();
 	}

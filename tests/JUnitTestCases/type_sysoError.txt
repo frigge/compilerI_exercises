@@ -1,5 +1,5 @@
 class FehlerSammlung{
-	int x;
+	boolean x;
 	
 	public int syso(){
 		System.out.println(x);
