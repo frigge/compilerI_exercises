@@ -27,21 +27,31 @@ aspect typeComp {
 		private java.util.Map<Type,TreeElem> treeMap = new java.util.HashMap<Type,TreeElem>();
 		
 		public CompilationError addElement(Id i, Lookup l){
-			if(!treeMap.containsKey(new IdType(i.getFirstLine(),i))){
-				ClassDecl c = l.lookupClass(i.getIdent());
-				if(c == null){
-					return new CompilationError("Kann Klasse zum Typen "+i.getIdent()+" nicht finden (Zeile "+i.getFirstLine()+")");
+			try {
+				Type newType = new IdType(i.getFirstLine(),i.clone());
+				newType.setParent(i.getParent());
+				if(!treeMap.containsKey(newType)){
+					ClassDecl c = l.lookupClass(i.getIdent());
+					if(c == null){
+						return new CompilationError("Kann Klasse zum Typen "+i.getIdent()+" nicht finden (Zeile "+i.getFirstLine()+")");
+					}
+					TreeElem element = new TreeElem(c);
+					if(c.getExtends() != null){
+						CompilationError e = addElement(c.getExtends(),l);
+						Type t = new IdType(c.getFirstLine(),c.getExtends());
+						t.setParent(i.getParent());
+						element.setSuperType(treeMap.get(t));
+					}
+					treeMap.put(newType,element); 
 				}
-				TreeElem element = new TreeElem(c);
-				if(c.getExtends() != null){
-					CompilationError e = addElement(c.getExtends(),l);
-					element.setSuperType(treeMap.get(new IdType(c.getFirstLine(),c.getExtends())));
-				} 
+				return null;
+			} catch (CloneNotSupportedException e1) {
+				throw new UnsupportedOperationException(e1);
 			}
-			return null;
 		}
 		
 		public ClassDecl supertypeOf(Type a){
+			TreeElem t = treeMap.get(a);
 			TreeElem superType = treeMap.get(a).getSupertype();
 			return superType == null ? null : superType.getType();
 		}
@@ -105,7 +115,13 @@ aspect typeComp {
 		CompilationError error = tree().addElement(getIdent(),lookup());
 		addError(error);
 		ClassDecl c = tree().supertypeOf(this);
-		return c == null ? null : new IdType(c.getFirstLine(),c.getIdent());
+		if(c== null){
+			return null;
+		} else {
+			Type supertype = new IdType(c.getFirstLine(),c.getIdent());
+			supertype.setParent(this);
+			return supertype;
+		}
 	}
 	
 	public abstract boolean Type.instanceOf(Type t);

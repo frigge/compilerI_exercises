@@ -34,7 +34,13 @@ aspect lookupTable{
 		}
 		
 		public Decl lookupMethod(ClassDecl nesting, String name, List<Type> params){
-			return lookupMethod(new IdType(nesting.getFirstLine(), nesting.getIdent()),name,params);		
+			try{
+				IdType t = new IdType(nesting.getFirstLine(), nesting.getIdent().clone());
+				t.setParent(nesting);
+				return lookupMethod(t,name,params);		
+			} catch (CloneNotSupportedException e){
+				throw new UnsupportedOperationException("",e);
+			}
 		}
 		
 		public Decl lookupMethod(Type nesting, String name, List<Type> params){
@@ -175,14 +181,34 @@ aspect lookupTable{
 					return false;
 			} else if (!nesting.equals(other.nesting))
 				return false;
-			boolean allTheSame = true;
-			for (int i = 0; i < parameter.size() && allTheSame; i++) {
+			boolean oInstanceOfT = false;
+			boolean tInstanceOfO = false;
+			boolean different = false;
+			for (int i = 0; i < parameter.size() && !different; i++) {
 				Type t = parameter.get(i);
 				Type o = parameter.get(i);
 				
-				allTheSame = t.equals(o);	
+				if(!t.equals(o)){
+					if(t.instanceOf(o)){
+						tInstanceOfO = true;
+					} else if(o.instanceOf(t)){
+						oInstanceOfT = true;
+					} else {
+						different = true;
+					}
+				}
 			}
-			return allTheSame;
+			if(different){
+				return false;	//Eindeutig unterscheidbar
+			} else {
+				if(oInstanceOfT && tInstanceOfO){
+					return true;	//Nicht eindeutig unterscheidbar
+				} else if(oInstanceOfT || tInstanceOfO){
+					return false;	//Man kann immer die richtige auswählen
+				} else {
+					return true;	//Identisch
+				}
+			}
 		}
 	}
 }
