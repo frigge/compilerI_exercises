@@ -32,6 +32,9 @@ aspect lookupTable{
 		public ClassDecl lookupClass(Type t){
 			return lookupClass(t.typeValue());
 		}
+		public ClassDecl lookupClass(Id i){
+			return lookupClass(i.getIdent());
+		}
 		
 		public Decl lookupMethod(ClassDecl nesting, String name, List<Type> params){
 			try{
