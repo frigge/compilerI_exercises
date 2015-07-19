@@ -1,0 +1,71 @@
+aspect LabelGeneration{
+	//Jump-Labels:
+	//J_MethodName_: Praefix fuer die weiteren Angaben
+
+	public class LabelGen{
+		private java.util.Map<LabelType,IntWrapper> mapping = new java.util.HashMap<LabelType,IntWrapper>();
+		private String prefix = null;
+		
+		public void setSourroundings(MethodDecl md){
+			mapping.clear();
+			prefix = CharConsts.getMethodName(md) + CharConsts.ELEMENT_SEPERATOR;
+		}
+		
+		public void setSourroundings(String md){
+			mapping.clear();
+			prefix = md + CharConsts.ELEMENT_SEPERATOR;
+		}
+
+		public String getLabel(LabelType lt){
+			IntWrapper iw = mapping.get(lt);
+			if(iw == null){
+				iw = new IntWrapper();
+				mapping.put(lt,iw);
+			}
+			String result = prefix + lt.value() +iw.get();
+			iw.inc();
+			return result;
+		}
+		
+		private static class IntWrapper{
+			private int num = 0;
+			
+			private int get(){
+				return num;
+			}
+			
+			private void inc(){
+				num++;
+			}
+		}
+	}
+	
+	public abstract class LabelType {
+		//IF, THEN, ELSE, ENDIF, WHILE_BEDINUNG, WHILE_LOOP, END-WHILE;
+		public int hashCode(){return this.getClass().hashCode();}
+		public boolean equals(Object o){return o == null ? false : this.getClass().equals(o.getClass());}
+		public abstract String value();
+	}
+	
+	public class IfLabel extends LabelType {public String value (){return "If_If";}}
+	public class ThenLabel extends LabelType {public String value (){return "If_Then";}}
+	public class ElseLabel extends LabelType {public String value (){return "If_Else";}}
+	public class EndIfLabel extends LabelType {public String value (){return "If_EndIf";}}
+	public class WhileLabel extends LabelType {public String value (){return "While_If";}}
+	public class WhileLoopLabel extends LabelType {public String value (){return "While_Loop";}}
+	public class WhileEndLabel extends LabelType {public String value (){return "While_End";}}
+	
+	syn lazy LabelGen Program.labelGen() {
+		return new LabelGen();
+	}
+	eq Program.getMain().labelGen() = this.labelGen();
+	eq Program.getDecls().labelGen() = this.labelGen();
+	eq Decl.getIdent().labelGen() = this.labelGen();
+	  
+	inh lazy LabelGen Decl.labelGen();
+	inh lazy LabelGen Statement.labelGen();
+	inh lazy LabelGen Exp.labelGen();
+	inh lazy LabelGen Type.labelGen();
+	inh lazy LabelGen Op.labelGen();
+	inh lazy LabelGen Id.labelGen();
+}

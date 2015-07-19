@@ -2,10 +2,14 @@
 
   <property name="parser.name" value="MJParser"/>
 
-  <property name="package" value="minijava"/>
+  <property name="spiglet.package" value="spiglet"/>
+  <property name="piglet.package" value="piglet"/>
+  <property name="minijava.package" value="minijava"/>
 
   <property name="src.dir" value="src"/>
-  <property name="grammar.dir" value="compiler"/>
+  <property name="minijava.grammar.dir" value="compiler/minijava"/>
+  <property name="piglet.grammar.dir" value="compiler/piglet"/>
+  <property name="spiglet.grammar.dir" value="compiler/spiglet"/>
   <property name="gen.dir" value="${basedir}/gen"/>
   <property name="classes.dir" value="bin"/>
   <property name="tools"   value="tools"/>
@@ -14,28 +18,78 @@
   <taskdef name="beaver"  classname="beaver.comp.run.AntTask" classpath="${tools}/beaver.jar"/>
   <taskdef name="jastadd" classname="jastadd.JastAddTask" classpath="${tools}/jastadd2.jar" />
 
-  <target name="scanner">
-    <mkdir dir="${gen.dir}/${package}"/>
-    <jflex file="${grammar.dir}/parser/MJScanner.flex" outdir="${gen.dir}/${package}" nobak="true" />
+  <target name="minijava.scanner">
+    <mkdir dir="${gen.dir}/${minijava.package}"/>
+    <jflex file="${minijava.grammar.dir}/parser/MJScanner.flex" outdir="${gen.dir}/${minijava.package}" nobak="true" />
   </target>
 
-  <target name="parser">
-    <mkdir dir="${gen.dir}/${package}"/>
-    <beaver file="${grammar.dir}/parser/MJParser.beaver" destdir="${gen.dir}/${package}" terminalNames="yes" compress="no" useSwitch="yes" reportActions="yes" />
+  <target name="minijava.parser">
+    <mkdir dir="${gen.dir}/${minijava.package}"/>
+    <beaver file="${minijava.grammar.dir}/parser/MJParser.beaver" destdir="${gen.dir}/${minijava.package}" terminalNames="yes" compress="no" useSwitch="yes" reportActions="yes" />
   </target>
 
-  <target name="jastadd">
+  <target name="piglet.scanner">
+    <mkdir dir="${gen.dir}/${piglet.package}"/>
+    <jflex file="${piglet.grammar.dir}/PigletScanner.flex" outdir="${gen.dir}/${piglet.package}" nobak="true" />
+  </target>
+
+  <target name="piglet.parser">
+    <mkdir dir="${gen.dir}/${piglet.package}"/>
+    <beaver file="${piglet.grammar.dir}/PigletParser.beaver" destdir="${gen.dir}/${piglet.package}" terminalNames="yes" compress="no" useSwitch="yes" reportActions="yes" />
+  </target>
+
+  <target name="spiglet.scanner">
+    <mkdir dir="${gen.dir}/${piglet.package}"/>
+    <jflex file="${spiglet.grammar.dir}/SPigletScanner.flex" outdir="${gen.dir}/${spiglet.package}" nobak="true" />
+  </target>
+
+  <target name="spiglet.parser">
+    <mkdir dir="${gen.dir}/${spiglet.package}"/>
+    <beaver file="${spiglet.grammar.dir}/SPigletParser.beaver" destdir="${gen.dir}/${spiglet.package}" terminalNames="yes" compress="no" useSwitch="yes" reportActions="yes" />
+  </target>
+  
+  <target name="prepair">
     <mkdir dir="${gen.dir}"/>
-    <jastadd package="${package}" grammar="${grammar.dir}" outdir="${gen.dir}" beaver="true" debug="true">
+  </target>
+
+  <target name="minijava.jastadd">
+    <jastadd package="${minijava.package}" grammar="${minijava.grammar.dir}" outdir="${gen.dir}" beaver="true" debug="true">
         <fileset dir=".">
-          <include name="${grammar.dir}/parser/*.ast"/>
-		  <include name="${grammar.dir}/checking/*.jrag"/>
-          <include name="${grammar.dir}/*.jadd"/>
+          <include name="${minijava.grammar.dir}/parser/*.ast"/>
+		  <include name="${minijava.grammar.dir}/checking/*.jrag"/>
+		  <include name="${minijava.grammar.dir}/toPiglet/*.jrag"/>
+          <include name="${minijava.grammar.dir}/*.jadd"/>
+        </fileset>
+      </jastadd>
+  </target>
+  
+   <target name="piglet.jastadd">
+    <jastadd package="${piglet.package}" grammar="${piglet.grammar.dir}" outdir="${gen.dir}" beaver="true" debug="true">
+        <fileset dir=".">
+          <include name="${piglet.grammar.dir}/*.ast"/>
+		  <include name="${piglet.grammar.dir}/*.jrag"/>
+		  <include name="${piglet.grammar.dir}/*.jrag"/>
+        </fileset>
+      </jastadd>
+  </target>
+  
+  <target name="spiglet.jastadd">
+    <jastadd package="${spiglet.package}" grammar="${spiglet.grammar.dir}" outdir="${gen.dir}" beaver="true" debug="true">
+        <fileset dir=".">
+          <include name="${spiglet.grammar.dir}/*.ast"/>
+		  <include name="${spiglet.grammar.dir}/*.jrag"/>
+		  <include name="${spiglet.grammar.dir}/*.jrag"/>
         </fileset>
       </jastadd>
   </target>
 
-  <target name="preprocess" depends="clean,jastadd,parser,scanner">
+  <target name="preprocess" depends="clean,prepair,
+      spiglet.jastadd,
+      piglet.jastadd,
+      minijava.jastadd,
+      spiglet.parser,spiglet.scanner,
+      piglet.parser,piglet.scanner,
+      minijava.parser,minijava.scanner">
   </target>
 
   <target name="compile" depends="preprocess">
