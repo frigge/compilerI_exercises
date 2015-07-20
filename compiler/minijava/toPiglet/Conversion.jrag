@@ -186,17 +186,25 @@ aspect MiniJavaToPigletConversion{
   		return getO().toPiglet(getL(), getR());
   	}
 	public piglet.Exp ArrayExp.toPiglet(){
-		//TODO no freakin guess to be honest...
-		//ArrayExp 	:Exp 	::= Feld:Exp Position:Exp;
-		//Feld muss einen Pointer oder so runter reichen... vielleicht abfrage, ob Temp oder Lit und dann dementsprechend drauf zugreifen
-		//Erstes Feld enthaelt Laenge, fuer ExceptionHandling
-		return new piglet.IntLiteral(0);
+		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+		piglet.Exp e = getFeld().toPiglet();
+		int arbeitstemp = memLookup().getFreeTemp();
+		int pos = memLookup().getFreeTemp();
+		add(result,new piglet.Move(new piglet.Temp(pos),getPos().toPiglet()));
+		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),e,0));
+		//add(result,new piglet.); TODO: finish this
+		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),e,0));
+		memLookup().unblockTemp(arbeitstemp);
+		return new piglet.StmtExp(result,new piglet.TempExp(new piglet.Temp(arbeitstemp)));
 	}
 	public piglet.Exp LengthExp.toPiglet(){
-		//TODO no freakin guess to be honest...
-		//LengthExp :Exp	::= Feld:Exp;
-		//gleiches Problem wie oben
-		return new piglet.IntLiteral(0);
+		piglet.Exp e = getFeld().toPiglet();
+		int arbeitstemp = memLookup().getFreeTemp();
+
+		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),e,0));
+		memLookup().unblockTemp(arbeitstemp);
+		return new piglet.StmtExp(result,new piglet.TempExp(new piglet.Temp(arbeitstemp)));
 	}
 	public piglet.Exp MethodExp.toPiglet(){
 		//TODO Oehm...
