@@ -1,5 +1,7 @@
 aspect MiniJavaToPigletConversion{	
 
+	//TEMP 0 ist this
+
 	syn piglet.Program Program.toPiglet() {
 	    piglet.List<piglet.LabeledStmt> mainStatements = getMain().toPiglet();
 	    piglet.List<piglet.Procedure> procedures = new piglet.List<piglet.Procedure>();
@@ -24,6 +26,7 @@ aspect MiniJavaToPigletConversion{
   	}
   	
   	public piglet.List<piglet.LabeledStmt> MainClass.toPiglet(){
+  		memLookup().openScp();
   		localLookup().openScp();
 		for (VarDecl v : getVariabless()){
 			localLookup().enter(v);
@@ -38,6 +41,7 @@ aspect MiniJavaToPigletConversion{
   			}
   		}
   		localLookup().closeScp();
+  		memLookup().closeScp();
   		return result;
   	}
   	
@@ -125,9 +129,9 @@ aspect MiniJavaToPigletConversion{
   	
   	protected piglet.Stmt Statement.store(Id ident, piglet.Exp value, piglet.Exp pos, int typeSize){
 		VarDecl decl = localLookup().lookup(ident);
-		int speicherPos = memLookup().lookup(decl);
 		piglet.Exp speicherExp;
 		if(decl.isStack()){
+			int speicherPos = memLookup().lookup(decl);
 			speicherExp =  new piglet.Plus(
   			 		new piglet.TempExp(new piglet.Temp(speicherPos)), 
   			 		new piglet.Times(
@@ -136,8 +140,9 @@ aspect MiniJavaToPigletConversion{
   			 		)
   			 );
 		} else {
+			piglet.Exp speicherPos = new piglet.Plus(new piglet.TempExp(new piglet.Temp(0)),new piglet.IntLiteral(classGen().lookup(decl)));
 			speicherExp =  new piglet.Plus(
-  			 		new piglet.IntLiteral(speicherPos), 
+  			 		speicherPos, 
   			 		new piglet.Times(
   			 			new piglet.IntLiteral(typeSize),
   			 			pos
@@ -148,11 +153,12 @@ aspect MiniJavaToPigletConversion{
   	}
   	protected piglet.Stmt Statement.store(Id ident, piglet.Exp value){
   		VarDecl decl = localLookup().lookup(ident);
-  		int speicherPos = memLookup().lookup(decl);
 		if(decl.isStack()){
+  			int speicherPos = memLookup().lookup(decl);
 			return new piglet.Move(new piglet.Temp(speicherPos), value);
 		} else {
-			return new piglet.HStore(new piglet.IntLiteral(speicherPos),0,value);
+			piglet.Exp speicherPos = new piglet.Plus(new piglet.TempExp(new piglet.Temp(0)),new piglet.IntLiteral(classGen().lookup(decl)));
+			return new piglet.HStore(speicherPos,0,value);
 		}  
   	}
   	  	
@@ -193,7 +199,7 @@ aspect MiniJavaToPigletConversion{
 		return new piglet.IntLiteral(0);
 	}
 	public piglet.Exp MethodExp.toPiglet(){
-		//Hier werden noch Methoden spannend
+		//TODO Oehm...
 		//MethodExp	:Exp	::= Feld:Exp Method:Id Parameter:Exp*;
 		return new piglet.IntLiteral(0);
 	}
@@ -293,11 +299,18 @@ aspect MiniJavaToPigletConversion{
   	}
   	public piglet.Exp And.toPiglet(Exp l, Exp r){
 		int arbeitsTemp = memLookup().getFreeTemp();
-  		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-  		piglet.Exp add = new piglet.Plus(l.toPiglet(), r.toPiglet());
-  		piglet.Exp lt = new piglet.Lt(new piglet.IntLiteral(1),add);
-  		piglet.Temp temp = new piglet.Temp(arbeitsTemp);
-  		add(result,new piglet.Move(temp,lt));
+		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+  		String thenLabel = labelGen().getLabel(new ThenLabel());
+  		String elseLabel = labelGen().getLabel(new ElseLabel());
+  		String endIfLabel = labelGen().getLabel(new EndIfLabel());
+  		add(result,new piglet.CJump(l.toPiglet(),new piglet.Label(thenLabel)));
+  		add(result,new piglet.Jump(new piglet.Label(elseLabel)));
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(thenLabel)), new piglet.Noop()));
+  		add(result,new piglet.Move(new piglet.Temp(arbeitsTemp),r.toPiglet()));
+  		add(result,new piglet.Jump(new piglet.Label(endIfLabel)));
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(elseLabel)), new piglet.Noop()));
+  		add(result,new piglet.Move(new piglet.Temp(arbeitsTemp),new piglet.IntLiteral(0)));
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(endIfLabel)), new piglet.Noop()));
 	  	memLookup().unblockTemp(arbeitsTemp);
   		return new piglet.StmtExp(result, new piglet.TempExp(new piglet.Temp(arbeitsTemp)));
   	}

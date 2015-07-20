@@ -1,2 +1,90 @@
 aspect ClassGeneration{
+	syn lazy ClassGenerator Program.classGen() {
+		return new ClassGenerator();
+	}
+	eq Program.getMain().classGen() = this.classGen();
+	eq Program.getDecls().classGen() = this.classGen();
+	eq Decl.getIdent().classGen() = this.classGen();
+	  
+	inh lazy ClassGenerator Decl.classGen();
+	inh lazy ClassGenerator Statement.classGen();
+	inh lazy ClassGenerator Exp.classGen();
+	inh lazy ClassGenerator Type.classGen();
+	inh lazy ClassGenerator Op.classGen();
+	inh lazy ClassGenerator Id.classGen();
+	
+	public class ClassGenerator{
+		private java.util.Map<ClassDecl,ClassInfos> varPositions = new java.util.HashMap<ClassDecl,ClassInfos>();
+		private ClassDecl currentClass = null;
+	
+		public void build(ClassDecl c){
+			ClassInfos infos = new ClassInfos();
+			varPositions.put(c,infos);
+			java.util.Map<VarDecl,Integer> varInfos = new java.util.HashMap<VarDecl,Integer>();
+			infos.varPos = varInfos;
+			
+			java.util.Map<MethodDecl,Integer> methodPos = new java.util.HashMap<MethodDecl,Integer>();
+			infos.methodPos = methodPos;
+
+
+			buildLocalInfos(infos,c);
+		}
+		
+		private void buildLocalInfos(ClassInfos i, ClassDecl c){
+			java.util.List<ClassDecl> superTypes = new java.util.ArrayList<ClassDecl>();
+			ClassDecl h = c;
+			while(h != null){
+				superTypes.add(0,h);
+				h = h.superClass();
+			}
+			buildLocalVars(i.varPos,superTypes);
+			builLocalMethods(i.methodPos,superTypes);
+		}
+		
+		private void buildLocalVars(java.util.Map<VarDecl,Integer> infos, java.util.List<ClassDecl> superTypes){
+			int pos = 1;
+			ClassDecl h;
+			for(int i = 0; i < superTypes.size(); i++){
+				h = superTypes.get(i);
+				for(VarDecl v: h.getVariabless()){
+					infos.put(v,pos*4);
+					pos++;
+				}
+			}
+		}
+		
+		private void builLocalMethods(java.util.Map<MethodDecl,Integer> infos, java.util.List<ClassDecl> superTypes){
+			//TODO Methodenueberschreiben fehlt...	
+			int pos = 0;
+			ClassDecl h;
+			for(int i = 0; i < superTypes.size(); i++){
+				h = superTypes.get(i);
+				for(MethodDecl m: h.getMethodss()){
+					infos.put(m,pos*4);
+					pos++;
+				}
+			}
+		}
+		
+		public void openScp(ClassDecl c){
+			currentClass = c;
+		}
+		
+		public void closeScp(){
+			currentClass = null;
+		}
+	
+		public int lookup(VarDecl v){
+			return varPositions.get(currentClass).varPos.get(v);
+		}
+	
+		public int lookup(MethodDecl m){
+			return varPositions.get(currentClass).methodPos.get(m);
+		}
+		
+		private class ClassInfos{
+			java.util.Map<VarDecl,Integer> varPos;
+			java.util.Map<MethodDecl,Integer> methodPos;
+		}
+	}
 }
