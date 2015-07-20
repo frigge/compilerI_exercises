@@ -1,0 +1,107 @@
+aspect MemoryLookup{
+	inh boolean VarDecl.isStack();
+	
+	eq MainClass.getVariables().isStack() = true;
+	eq ClassDecl.Variables().isStack() = false;
+	eq MethodDecl.getVars().isStack() = true;
+	eq MethodDecl.getParams().isStack() = true;
+	
+	
+	syn lazy MemoryLookup Program.memLookup() {
+		return new MemoryLookup();
+	}
+	eq Program.getMain().memLookup() = this.memLookup();
+	eq Program.getDecls().memLookup() = this.memLookup();
+	eq Decl.getIdent().memLookup() = this.memLookup();
+	  
+	inh lazy MemoryLookup Decl.memLookup();
+	inh lazy MemoryLookup Statement.memLookup();
+	inh lazy MemoryLookup Exp.memLookup();
+	inh lazy MemoryLookup Type.memLookup();
+	inh lazy MemoryLookup Op.memLookup();
+	inh lazy MemoryLookup Id.memLookup();
+
+	public class MemoryLookup{
+		java.util.List<Scope> scopes = new java.util.ArrayList<Scope>();
+		java.util.List<java.util.Map<VarDecl,Integer>> maps = new java.util.ArrayList<java.util.Map<VarDecl,Integer>>();
+	
+		public void openScp(){
+			scopes.add(new Scope());
+			maps.add(new java.util.HashMap<VarDecl,Integer>());
+		}
+		
+		public void closeScp(){
+			maps.remove(maps.size()-1);
+			scopes.remove(scopes.size()-1);
+		}
+	
+		public int enter(VarDecl v){
+			Scope currentScope = scopes.get(scopes.size()-1);
+			java.util.Map<VarDecl,Integer> currentMap = maps.get(maps.size()-1);
+			
+			int i = currentScope.getNext();
+			currentMap.put(v,i);
+			return i;
+		}
+	
+		public int lookup(VarDecl v){
+			Integer i = maps.get(maps.size()-1).get(v);
+			if(i == null){
+				i = enter(v);
+			}
+			return i;
+		}
+		
+		public int getFreeTemp(){
+			return scopes.get(scopes.size()-1).getNext();
+		}
+		
+		public void unblockTemp(int i){
+			scopes.get(scopes.size()-1).unblock(i);
+		}
+		
+		public void blockTemp(int i){
+			scopes.get(scopes.size()-1).block(i);
+		}
+	
+	
+		private static class Scope{
+			private int nextFreeInt = 0;
+			private java.util.List<Integer> unblockedIntegers = new java.util.ArrayList<Integer>();
+			
+			public int getNext(){
+				if(unblockedIntegers.isEmpty()){
+					return nextFreeInt++;
+				} else {
+					Integer result = unblockedIntegers.get(0);
+					unblockedIntegers.remove(0);
+					return result;
+				}
+			}
+			
+			public void unblock(int i){
+				unblockedIntegers.add(i);
+			}
+			
+			public void block(int i){
+				if(i < nextFreeInt){
+					if(unblockedIntegers.contains(i)){
+						for(int j = 0; j < unblockedIntegers.size(); j++){
+							if(unblockedIntegers.get(j).equals(i)){
+								unblockedIntegers.remove(j);
+							}
+						}					
+					} else {
+						throw new IllegalArgumentException("Already blocked :/");
+					}
+				} else {
+					for(int j = nextFreeInt; j<i; j++){
+						unblockedIntegers.add(j);
+					}
+					nextFreeInt++;
+				}
+			}
+		}
+	}
+
+}

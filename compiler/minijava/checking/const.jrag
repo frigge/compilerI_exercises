@@ -1,0 +1,31 @@
+aspect constants {
+	public class CharConsts{
+		private static final String CLASS = "CLASS";
+		private static final String METHOD = "METHOD";
+		private static final String VARIABLE = "VARIABLE";
+		
+		private static final String CONST_SEPERATOR = ":";
+		public static final String ELEMENT_SEPERATOR = ".";
+		
+		public static String getClassName(Decl d){
+			return getClassName(d.getIdent().getIdent());
+		}
+		public static String getClassName(String ident){
+			return CLASS+CONST_SEPERATOR+ident;
+		}
+		
+		public static String getMethodName(Decl d){
+			return getMethodName(d.getIdent().getIdent());
+		}
+		public static String getMethodName(String ident){
+			return METHOD+CONST_SEPERATOR+ident;
+		}
+		
+		public static String getVariableName(Decl d){
+			return getVariableName(d.getIdent().getIdent());
+		}
+		public static String getVariableName(String ident){
+			return VARIABLE+CONST_SEPERATOR+ident;
+		}
+	}
+}

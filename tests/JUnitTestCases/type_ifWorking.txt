@@ -1,0 +1,12 @@
+class FehlerSammlung{
+	int x;
+	int y;
+	
+	public int funktionierendesIfThenElse(){
+		if((!(x<y)) && (!(y<x)))
+			System.out.println(x);
+		else
+			System.out.println(y);
+		return 0;
+	}
+}

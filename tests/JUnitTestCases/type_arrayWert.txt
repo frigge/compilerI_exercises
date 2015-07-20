@@ -1,0 +1,10 @@
+class FehlerSammlung{
+	int c;
+	boolean b;
+	int[] d;
+	
+	public int arrayZugriff(){
+		d[c] = b;
+		return 0;
+	}
+}

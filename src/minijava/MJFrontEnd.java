@@ -9,7 +9,10 @@ class MJFrontEnd {
    if(args.length != 1) {
       System.out.println("MJFrontEnd: missing file command line argument");
       //System.exit(1);
-      inputFileName = "tests/MainTest.java";
+//      inputFileName = "tests/MainTest.java";
+//      inputFileName = "tests/MainTestForLookup.java";
+//      inputFileName = "tests/MainTestForType.java";
+      inputFileName = "tests/MainTestForPiglet.java";
     }
    else {
       System.out.println("MJFrontEnd: starting on file " + args[0]);
@@ -19,7 +22,6 @@ class MJFrontEnd {
    try {
       MJParser parser = new MJParser();
 
-      // Start parsing from the nonterminal "Start".
       Program ast = (Program) parser.parse(new MJScanner(new FileReader(inputFileName)));
        
     /*  Set<Error> typeErrors = ast.getTypeErrors();
@@ -33,6 +35,17 @@ class MJFrontEnd {
       */
       // Print the resulting AST on standard output.
       System.out.println(ast.print().getString()); 
+//      System.out.println(ast.validate().size()); 
+      ast.check();
+      System.out.println("Anzahl der Fehler: "+ast.error().size());
+      for (CompilationError error : ast.error()) {
+    	  System.out.println(error.getReason());
+      }
+      if(ast.error().isEmpty()){
+	      System.out.println("");
+	      System.out.println("Piglet: ");
+	      System.out.println(ast.toPiglet().print().getString());
+      }
     }
     catch (FileNotFoundException e) {
       System.err.println("MJFrontEnd: file " + inputFileName + " not found");

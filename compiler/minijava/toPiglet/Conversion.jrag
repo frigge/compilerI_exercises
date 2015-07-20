@@ -1,0 +1,329 @@
+aspect MiniJavaToPigletConversion{	
+
+	//TEMP 0 ist this
+
+	syn piglet.Program Program.toPiglet() {
+	    piglet.List<piglet.LabeledStmt> mainStatements = getMain().toPiglet();
+	    piglet.List<piglet.Procedure> procedures = new piglet.List<piglet.Procedure>();
+	    for (ClassDecl cd : getDeclss()){
+	    	piglet.List<piglet.Procedure> declProcedures = cd.toPiglet();
+	    	for(piglet.Procedure p : declProcedures){
+	    		procedures.add(p);
+    		}
+    	}
+	    piglet.Program pigletP = new piglet.Program(mainStatements, procedures);
+	    return pigletP;
+  	}
+  	
+  	protected void Statement.add(piglet.List<piglet.LabeledStmt> list, piglet.Stmt s){
+  		list.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),s));
+  	}
+  	protected void Exp.add(piglet.List<piglet.LabeledStmt> list, piglet.Stmt s){
+  		list.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),s));
+  	}
+  	protected void Op.add(piglet.List<piglet.LabeledStmt> list, piglet.Stmt s){
+  		list.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),s));
+  	}
+  	
+  	public piglet.List<piglet.LabeledStmt> MainClass.toPiglet(){
+  		memLookup().openScp();
+  		localLookup().openScp();
+		for (VarDecl v : getVariabless()){
+			localLookup().enter(v);
+		}
+		
+  		labelGen().setSourroundings(getIdent().getIdent());
+  		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+  		for(Statement s : getStatementss()){
+  			piglet.List<piglet.LabeledStmt> sList = s.toPiglet();
+  			for(piglet.LabeledStmt ls : sList){
+  				result.add(ls);
+  			}
+  		}
+  		localLookup().closeScp();
+  		memLookup().closeScp();
+  		return result;
+  	}
+  	
+  	public piglet.List<piglet.Procedure> ClassDecl.toPiglet(){
+	  	localLookup().openClass(this);
+		for (VarDecl v : getVariabless()) {
+			localLookup().enter(v);
+		}
+		
+	  	localLookup().closeClass();
+  		return new piglet.List<piglet.Procedure>();
+  	}
+  	
+// ---------------------------------------------------------------------------------------------------------------------
+// --- Statements
+// ---------------------------------------------------------------------------------------------------------------------  	
+  	
+  	
+  	public abstract piglet.List<piglet.LabeledStmt> Statement.toPiglet();
+  	public piglet.List<piglet.LabeledStmt> StmList.toPiglet(){
+  		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+  		for(Statement s : getStatementss()){
+  			piglet.List<piglet.LabeledStmt> sList = s.toPiglet();
+  			for(piglet.LabeledStmt ls : sList){
+  				result.add(ls);
+  			}
+  		}
+  		return result;
+  	}
+  	public piglet.List<piglet.LabeledStmt> IfThenElse.toPiglet(){
+  		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+  		String thenLabel = labelGen().getLabel(new ThenLabel());
+  		String elseLabel = labelGen().getLabel(new ElseLabel());
+  		String endIfLabel = labelGen().getLabel(new EndIfLabel());
+  		//If
+  		add(result,new piglet.CJump(getIf().toPiglet(),new piglet.Label(thenLabel)));
+  		add(result,new piglet.Jump(new piglet.Label(elseLabel)));
+  		//Then
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(thenLabel)), new piglet.Noop()));
+  		piglet.List<piglet.LabeledStmt> thenList = getThen().toPiglet();
+  		for(piglet.LabeledStmt ts : thenList){
+  			result.add(ts);
+  		}
+  		add(result,new piglet.Jump(new piglet.Label(endIfLabel)));
+  		
+  		//Else
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(elseLabel)), new piglet.Noop()));
+  		piglet.List<piglet.LabeledStmt> elseList = getElse().toPiglet();
+  		for(piglet.LabeledStmt es : elseList){
+  			result.add(es);
+  		}
+  		//EndIf
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(endIfLabel)), new piglet.Noop()));
+  		return result;
+  	}
+  	
+  	public piglet.List<piglet.LabeledStmt> While.toPiglet(){
+  		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+  		String whileLabel = labelGen().getLabel(new WhileLabel());
+  		String whileLoopLabel = labelGen().getLabel(new WhileLoopLabel());
+  		String whileEndLabel = labelGen().getLabel(new WhileEndLabel());
+  		//While Bedingung
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(whileLabel)), new piglet.Noop()));
+  		add(result,new piglet.CJump(getBedingung().toPiglet(),new piglet.Label(whileLoopLabel)));
+  		add(result,new piglet.Jump(new piglet.Label(whileEndLabel)));
+  		//LoopCode
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(whileLoopLabel)), new piglet.Noop()));
+  		piglet.List<piglet.LabeledStmt> codeList = getStatement().toPiglet();
+  		for(piglet.LabeledStmt cs : codeList){
+  			result.add(cs);
+  		}
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),
+  											new piglet.Jump(new piglet.Label(whileLabel))
+  										));
+  		//EndLoop
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(whileEndLabel)), new piglet.Noop()));
+  		return result;
+  	}
+  	
+  	public piglet.List<piglet.LabeledStmt> Syso.toPiglet(){
+  		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),new piglet.Print(getExp().toPiglet())));
+  		return result;
+  	}
+  	
+  	protected piglet.Stmt Statement.store(Id ident, piglet.Exp value, piglet.Exp pos, int typeSize){
+		VarDecl decl = localLookup().lookup(ident);
+		piglet.Exp speicherExp;
+		if(decl.isStack()){
+			int speicherPos = memLookup().lookup(decl);
+			speicherExp =  new piglet.Plus(
+  			 		new piglet.TempExp(new piglet.Temp(speicherPos)), 
+  			 		new piglet.Times(
+  			 			new piglet.IntLiteral(typeSize),
+  			 			pos
+  			 		)
+  			 );
+		} else {
+			piglet.Exp speicherPos = new piglet.Plus(new piglet.TempExp(new piglet.Temp(0)),new piglet.IntLiteral(classGen().lookup(decl)));
+			speicherExp =  new piglet.Plus(
+  			 		speicherPos, 
+  			 		new piglet.Times(
+  			 			new piglet.IntLiteral(typeSize),
+  			 			pos
+  			 		)
+  			 );
+		}  		
+		return new piglet.HStore(speicherExp,0,value);
+  	}
+  	protected piglet.Stmt Statement.store(Id ident, piglet.Exp value){
+  		VarDecl decl = localLookup().lookup(ident);
+		if(decl.isStack()){
+  			int speicherPos = memLookup().lookup(decl);
+			return new piglet.Move(new piglet.Temp(speicherPos), value);
+		} else {
+			piglet.Exp speicherPos = new piglet.Plus(new piglet.TempExp(new piglet.Temp(0)),new piglet.IntLiteral(classGen().lookup(decl)));
+			return new piglet.HStore(speicherPos,0,value);
+		}  
+  	}
+  	  	
+  	public piglet.List<piglet.LabeledStmt> Zuweisung.toPiglet(){
+  		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),store(getIdent(),getExp().toPiglet())));
+  		return result;
+  	}
+  	
+  	public piglet.List<piglet.LabeledStmt> ArrZuw.toPiglet(){
+  		int TYPE_SIZE = 4;
+  		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),store(getIdent(),getValue().toPiglet(),getPos().toPiglet(),TYPE_SIZE)));
+  		return result;
+  	}
+  	
+// ---------------------------------------------------------------------------------------------------------------------
+// --- Expressions
+// ---------------------------------------------------------------------------------------------------------------------  	
+  	
+  	public piglet.Exp Exp.toPiglet(){
+  		return new piglet.IntLiteral(0);
+  	}
+  	public piglet.Exp BinOpExp.toPiglet(){
+  		return getO().toPiglet(getL(), getR());
+  	}
+	public piglet.Exp ArrayExp.toPiglet(){
+		//TODO no freakin guess to be honest...
+		//ArrayExp 	:Exp 	::= Feld:Exp Position:Exp;
+		//Feld muss einen Pointer oder so runter reichen... vielleicht abfrage, ob Temp oder Lit und dann dementsprechend drauf zugreifen
+		//Erstes Feld enthaelt Laenge, fuer ExceptionHandling
+		return new piglet.IntLiteral(0);
+	}
+	public piglet.Exp LengthExp.toPiglet(){
+		//TODO no freakin guess to be honest...
+		//LengthExp :Exp	::= Feld:Exp;
+		//gleiches Problem wie oben
+		return new piglet.IntLiteral(0);
+	}
+	public piglet.Exp MethodExp.toPiglet(){
+		//TODO Oehm...
+		//MethodExp	:Exp	::= Feld:Exp Method:Id Parameter:Exp*;
+		return new piglet.IntLiteral(0);
+	}
+	public piglet.Exp TrueExp.toPiglet(){
+		return new piglet.IntLiteral(1);
+	}
+	public piglet.Exp FalseExp.toPiglet(){
+		return new piglet.IntLiteral(0);
+	}
+	public piglet.Exp IdExp.toPiglet(){
+		VarDecl v = localLookup().lookup(getName());
+		int speicherPos = memLookup().lookup(v);
+		if(v.isStack()){
+			return new piglet.TempExp(new piglet.Temp(speicherPos));
+		} else {
+			int arbeitsTemp = memLookup().getFreeTemp();
+	  		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+	  		add(result,new piglet.HLoad(new piglet.Temp(arbeitsTemp),new piglet.IntLiteral(speicherPos), 0));
+	  		memLookup().unblockTemp(arbeitsTemp);
+	  		return new piglet.StmtExp(result, new piglet.TempExp(new piglet.Temp(arbeitsTemp)));
+		}
+	}
+	public piglet.Exp IntLit.toPiglet(){
+		return new piglet.IntLiteral(Integer.parseInt(getWert()));
+	}
+	public piglet.Exp ThisExp.toPiglet(){
+		return new piglet.TempExp(new piglet.Temp(0));
+	}
+	public piglet.Exp IntArrExp.toPiglet(){
+		int TYPE_SIZE = 4;
+  		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+		int groesseWert = memLookup().getFreeTemp();
+		int arrayPointer = memLookup().getFreeTemp();
+		int initCounter = memLookup().getFreeTemp();
+		piglet.Exp groesse = getGroesse().toPiglet();
+		piglet.Exp noetigeFelder = new piglet.Plus(new piglet.IntLiteral(1),new piglet.TempExp(new piglet.Temp(groesseWert)));
+		piglet.Exp noetigeGroesse = new piglet.Times(new piglet.IntLiteral(TYPE_SIZE), noetigeFelder);
+		piglet.Exp alloc = new piglet.HAlloc(noetigeGroesse);
+		add(result, new piglet.Move(new piglet.Temp(groesseWert),groesse));
+		add(result, new piglet.Move(new piglet.Temp(arrayPointer),alloc));
+		add(result, new piglet.HStore(new piglet.TempExp(new piglet.Temp(arrayPointer)),0,new piglet.TempExp(new piglet.Temp(groesseWert))));
+		add(result, new piglet.Move(new piglet.Temp(initCounter),new piglet.IntLiteral(0)));
+		
+  		String whileLabel = labelGen().getLabel(new WhileLabel());
+  		String whileLoopLabel = labelGen().getLabel(new WhileLoopLabel());
+  		String whileEndLabel = labelGen().getLabel(new WhileEndLabel());
+  		//While Bedingung
+  		piglet.Exp bedingung = new piglet.Lt(new piglet.TempExp(new piglet.Temp(initCounter)), new piglet.TempExp(new piglet.Temp(arrayPointer)));
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(whileLabel)), new piglet.Noop()));
+  		add(result,new piglet.CJump(bedingung,new piglet.Label(whileLoopLabel)));
+  		add(result,new piglet.Jump(new piglet.Label(whileEndLabel)));
+  		//LoopCode
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(whileLoopLabel)), new piglet.Noop()));
+  		piglet.Exp offset = new piglet.Plus(new piglet.IntLiteral(1), new piglet.Times(new piglet.IntLiteral(TYPE_SIZE),new piglet.TempExp(new piglet.Temp(initCounter))));
+  		add(result,new piglet.HStore(new piglet.Plus(new piglet.TempExp(new piglet.Temp(arrayPointer)),offset),0,new piglet.IntLiteral(0)));
+  		add(result,new piglet.Move(new piglet.Temp(initCounter), new piglet.Plus(new piglet.TempExp(new piglet.Temp(initCounter)), new piglet.IntLiteral(1))));
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),
+  											new piglet.Jump(new piglet.Label(whileLabel))
+  										));
+  		//EndLoop
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(whileEndLabel)), new piglet.Noop()));
+		
+	  	memLookup().unblockTemp(groesseWert);
+	  	memLookup().unblockTemp(arrayPointer);
+	  	memLookup().unblockTemp(initCounter);
+  		return new piglet.StmtExp(result, new piglet.TempExp(new piglet.Temp(arrayPointer)));
+	}
+	public piglet.Exp NewExp.toPiglet(){
+		int TYPE_SIZE = 4;
+		ClassDecl c = lookup().lookupClass(getKlasse());
+		int groesse = c.getSizeOfDecl();
+		int noetigeGroesse = (groesse + 1)*4;
+  		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+		int objectPointer = memLookup().getFreeTemp();
+		piglet.Exp alloc = new piglet.HAlloc(new piglet.IntLiteral(noetigeGroesse));
+		//TODO move class-Object to first pointer
+		for(int i = 1; i < groesse; i++){
+			add(result,new piglet.HStore(new piglet.TempExp(new piglet.Temp(objectPointer)),4*i,new piglet.IntLiteral(0)));
+		} 		
+		
+	  	memLookup().unblockTemp(objectPointer);
+  		return new piglet.StmtExp(result, new piglet.TempExp(new piglet.Temp(objectPointer)));
+	}
+	public piglet.Exp NotExp.toPiglet(){
+		return new piglet.Minus(new piglet.IntLiteral(1), getWert().toPiglet());
+	}
+	public piglet.Exp Geklammert.toPiglet(){
+		return getExpression().toPiglet();
+	}
+	
+// ---------------------------------------------------------------------------------------------------------------------
+// --- Ops
+// ---------------------------------------------------------------------------------------------------------------------  	
+
+  	public piglet.Exp Op.toPiglet(Exp l, Exp r){
+  		return new piglet.IntLiteral(0);
+  	}
+  	public piglet.Exp And.toPiglet(Exp l, Exp r){
+		int arbeitsTemp = memLookup().getFreeTemp();
+		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+  		String thenLabel = labelGen().getLabel(new ThenLabel());
+  		String elseLabel = labelGen().getLabel(new ElseLabel());
+  		String endIfLabel = labelGen().getLabel(new EndIfLabel());
+  		add(result,new piglet.CJump(l.toPiglet(),new piglet.Label(thenLabel)));
+  		add(result,new piglet.Jump(new piglet.Label(elseLabel)));
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(thenLabel)), new piglet.Noop()));
+  		add(result,new piglet.Move(new piglet.Temp(arbeitsTemp),r.toPiglet()));
+  		add(result,new piglet.Jump(new piglet.Label(endIfLabel)));
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(elseLabel)), new piglet.Noop()));
+  		add(result,new piglet.Move(new piglet.Temp(arbeitsTemp),new piglet.IntLiteral(0)));
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(endIfLabel)), new piglet.Noop()));
+	  	memLookup().unblockTemp(arbeitsTemp);
+  		return new piglet.StmtExp(result, new piglet.TempExp(new piglet.Temp(arbeitsTemp)));
+  	}
+  	public piglet.Exp Plus.toPiglet(Exp l, Exp r){
+  		return new piglet.Plus(l.toPiglet(), r.toPiglet());
+  	}
+  	public piglet.Exp Minus.toPiglet(Exp l, Exp r){
+  		return new piglet.Minus(l.toPiglet(), r.toPiglet());
+  	}
+  	public piglet.Exp Mul.toPiglet(Exp l, Exp r){
+  		return new piglet.Times(l.toPiglet(), r.toPiglet());
+  	}
+  	public piglet.Exp Less.toPiglet(Exp l, Exp r){
+  		return new piglet.Lt(l.toPiglet(), r.toPiglet());
+  	}
+}

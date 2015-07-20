@@ -23,7 +23,7 @@ aspect PrettyPrint {
         return indent.startsWith("\n") ? indent : ("\n" + indent);
   }
 
-    syn String ASTNode.extractIndent() {
+  syn String ASTNode.extractIndent() {
   	  if(getParent() == null)
    		   return "";
       String indent = getParent().extractIndent();
@@ -45,12 +45,10 @@ aspect PrettyPrint {
   }
   eq Program.getMain().printer() = this.printer();
   eq Program.getDecls().printer() = this.printer();
+  eq Decl.getIdent().printer() = this.printer();
   
   inh lazy PrettyPrinter Decl.printer();
-  inh lazy PrettyPrinter IdType.printer();
-  inh lazy PrettyPrinter MainClass.printer();
   inh lazy PrettyPrinter Statement.printer();
-  inh lazy PrettyPrinter Param.printer();
   inh lazy PrettyPrinter Exp.printer();
   inh lazy PrettyPrinter Type.printer();
   inh lazy PrettyPrinter Op.printer();
@@ -62,6 +60,7 @@ aspect PrettyPrint {
     return printer();
   }
   
+  public abstract void Decl.print();
   public void MainClass.print() {
     printer().append("class ");
     getIdent().print();
@@ -78,7 +77,6 @@ aspect PrettyPrint {
   	printer().append(indent() + "}");
   	printer().append("\n}\n");
   }
-  
   public void ClassDecl.print() {
     printer().append("class ");
     getIdent().print();
@@ -124,12 +122,6 @@ aspect PrettyPrint {
 
   public void VarDecl.print() {
 	getT().print();
-  	printer().append(" ");
-  	getIdent().print();
-  }
-  
-  public void Param.print(){
-  	getT().print();
   	printer().append(" ");
   	getIdent().print();
   }
@@ -219,7 +211,9 @@ aspect PrettyPrint {
     printer().append("]");
   }  
   public void NewExp.print() {
-    printer().append("new " + getKlasse() + "()");
+    printer().append("new ");
+    getKlasse().print();
+    printer().append("()");
   }  
   public void ArrayExp.print() {
     getFeld().print();
@@ -279,4 +273,191 @@ aspect PrettyPrint {
   	printer().append("<");
   }
   
+  public String Program.toString() {
+  	StringBuilder b = new StringBuilder();
+    b.append(getMain().toString());
+    for (ClassDecl cd : getDeclss()) b.append(cd.toString());
+    return b.toString();
+  }
+  
+  public String MainClass.toString() {
+  	StringBuilder b = new StringBuilder();
+    b.append("class ");
+    b.append(getIdent().toString());
+    b.append(" {");
+  	b.append(indent() + "public static void main (String[] ");
+  	b.append(getParamName().toString());
+  	b.append(") {");
+	for (VarDecl v : getVariabless()) {
+	  b.append(indent() + PrettyPrinter.INDENT);  
+      b.append(v.toString());
+      b.append(";\n");
+    }
+	for (Statement s : getStatementss()) b.append(s.toString());
+  	b.append(indent() + "}");
+  	b.append("\n}\n");
+  	return b.toString();
+  }
+  public String ClassDecl.toString() {
+  	StringBuilder b = new StringBuilder();
+    b.append("class ");
+    b.append(getIdent().toString());
+    if(getExtends() != null){
+    	b.append(" extends ");
+    	b.append(getExtends().toString());
+    }    	
+	b.append(" {");
+   	for (VarDecl f : getVariabless()) {
+      b.append(f.toString());
+      b.append(";\n");
+    }
+	for (MethodDecl m : getMethodss()) b.append(m.toString());
+    b.append("\n}\n");
+    return b.toString();	
+  }
+
+  public String MethodDecl.toString() {
+  	StringBuilder b = new StringBuilder();
+  	b.append(indent() + "public ");
+  	b.append(getT().toString());
+  	b.append(" ");
+  	b.append(getIdent().toString());
+  	b.append("(");
+  	if (getNumParams() > 0) {
+  	  b.append(getParams(0).toString());
+  	  for (int i = 1; i < getNumParams(); i++) {
+  	    b.append(", ");
+  	    b.append(getParams(i).toString());
+  	  }
+  	} 
+  	b.append(") {");
+  	for (VarDecl v : getVarss()) {
+	  b.append(indent() + PrettyPrinter.INDENT);  
+      b.append(v.toString());
+      b.append(";\n");
+    }
+    for (Statement s : getStatementss()) b.append(s.toString());
+	b.append(indent() + PrettyPrinter.INDENT + "return ");
+	b.append(getReturnExp().toString());
+	b.append(";");
+  	b.append(indent() + "}\n");
+  	return b.toString();
+  }
+
+  public String VarDecl.toString() {
+  	StringBuilder b = new StringBuilder();
+	b.append(getT().toString());
+  	b.append(" ");
+  	b.append(getIdent().toString());
+  	return b.toString();
+  }
+  
+  public String IntArrType.toString() {
+    return "int[]";
+  }
+  public String BooleanType.toString() {
+    return "boolean";
+  }
+  public String IntType.toString() {
+    return "int";
+  }
+  public String IdType.toString() {
+    return getIdent().toString();
+  }
+  
+  public String StmList.toString() {
+  	StringBuilder b = new StringBuilder();
+    b.append(indent() + "{");
+    for (Statement s : getStatementss()) b.append(s.toString());
+    b.append(indent() + "}");
+  	return b.toString();
+  }
+  public String Zuweisung.toString() {
+    return getIdent().toString() + " = "+ getExp().toString() +";";
+  }
+  public String ArrZuw.toString() {
+  	return getIdent().toString()+"["+getPos().toString()+"] =" +getValue().toString()+";";
+  }
+  public String IfThenElse.toString() {
+    return "if (" + getIf().toString()+")"+getThen().toString()+" else "+getElse().toString();
+  }
+  public String While.toString() {
+    return "while ("+getBedingung().toString()+")"+getStatement().toString();
+  }
+  public String Syso.toString() {
+    return "System.out.println("+getExp().toString()+");";
+  }
+
+  public String BinOpExp.toString(){
+  	return getL().toString() + " "+getO().toString()+" "+ getR().toString();
+  }
+  public String NotExp.toString() {
+  	return "!(" + getWert().toString() +")";
+  }
+  public String Geklammert.toString() {
+  	return "(" + getExpression().toString() + ")";
+  }
+  public String IdExp.toString() {
+    return getName().toString();
+  }  
+  public String IntArrExp.toString() {
+    return "new int[" + getGroesse().toString() + "]";
+  }  
+  public String NewExp.toString() {
+  	return "new " + getKlasse().toString() + "()";
+  }  
+  public String ArrayExp.toString() {
+  	return getFeld().toString() + "[" + getPosition().toString() + "]";
+  }  
+  public String LengthExp.toString() {
+  	return getFeld().toString() + ".length";
+  }  
+  public String MethodExp.toString() {
+  	StringBuilder b = new StringBuilder();
+    b.append(getFeld().toString());
+    b.append(".");
+    b.append(getMethod().toString());
+    b.append("(");
+    if (getNumParameter() > 0) {
+  	  b.append(getParameter(0).toString());
+  	  for (int i = 1; i < getNumParameter(); i++) {
+  	    b.append(", ");
+  	    b.append(getParameter(i).toString());
+  	  }
+  	} 
+    b.append(")");
+    return b.toString();
+  }  
+  public String IntLit.toString() {
+  	return getWert().toString();
+  } 
+  public String TrueExp.toString() {
+  	return "true";
+  }
+  public String FalseExp.toString() {
+  	return "false";
+  }
+  public String ThisExp.toString() {
+  	return "this";
+  }
+  
+  public String Id.toString(){
+  	return getIdent();
+  }
+  
+  public String And.toString(){
+  	return "&&";
+  }
+  public String Plus.toString(){
+  	return "+";
+  }
+  public String Minus.toString(){
+  	return "-";
+  } 
+  public String Mul.toString(){
+  	return "*";
+  }
+  public String Less.toString(){
+  	return "<";
+  }
 }

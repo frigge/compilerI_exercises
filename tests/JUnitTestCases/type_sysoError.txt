@@ -1,0 +1,8 @@
+class FehlerSammlung{
+	boolean x;
+	
+	public int syso(){
+		System.out.println(x);
+		return 0;
+	}
+}
