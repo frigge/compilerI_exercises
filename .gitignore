@@ -3,3 +3,7 @@ bin/*
 .project
 .settings/*
 gen/*
+.idea/*
+out/*
+*.iml
+**/*.class
