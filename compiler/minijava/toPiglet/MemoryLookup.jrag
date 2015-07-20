@@ -60,8 +60,9 @@ aspect MemoryLookup{
 			scopes.get(scopes.size()-1).unblock(i);
 		}
 		
-		public void blockTemp(int i){
+		public void blockTemp(int i, VarDecl v){
 			scopes.get(scopes.size()-1).block(i);
+			 maps.get(maps.size()-1).put(v,i);
 		}
 	
 	
