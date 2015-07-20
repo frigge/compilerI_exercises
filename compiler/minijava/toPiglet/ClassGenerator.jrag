@@ -1,2 +1,30 @@
 aspect ClassGeneration{
+	syn lazy ClassGenerator Program.classGen() {
+		return new ClassGenerator();
+	}
+	eq Program.getMain().classGen() = this.classGen();
+	eq Program.getDecls().classGen() = this.classGen();
+	eq Decl.getIdent().classGen() = this.classGen();
+	  
+	inh lazy ClassGenerator Decl.classGen();
+	inh lazy ClassGenerator Statement.classGen();
+	inh lazy ClassGenerator Exp.classGen();
+	inh lazy ClassGenerator Type.classGen();
+	inh lazy ClassGenerator Op.classGen();
+	inh lazy ClassGenerator Id.classGen();
+	
+	public class ClassGenerator{
+		//TODO
+		public void openScp(ClassDecl c){
+			
+		}
+		
+		public void closeScp(){
+		
+		}
+	
+		public int lookup(VarDecl v){
+			return 0;
+		}
+	}
 }
