@@ -138,6 +138,18 @@ aspect typeComp {
 		}
 	}
 	
+	public ClassDecl ClassDecl.superClass(){
+		if(getExtends() == null){
+			return null;
+		} 
+		try{
+			Type t = new IdType(getFirstLine(),getExtends().clone());
+			return tree().supertypeOf(t);
+		} catch (CloneNotSupportedException e){
+			throw new UnsupportedOperationException(e);
+		}
+	}
+	
 	public abstract boolean Type.instanceOf(Type t);
 	public boolean IntArrType.instanceOf(Type t) {
 		return t instanceof IntArrType;
