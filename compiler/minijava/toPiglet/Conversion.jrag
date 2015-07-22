@@ -1,11 +1,25 @@
 aspect MiniJavaToPigletConversion{	
 
 	syn piglet.Program Program.toPiglet() {
+		int classLookupReg = 1;
+		piglet.List<piglet.LabeledStmt> mainStatements = new piglet.List<piglet.LabeledStmt>();
+		memLookup().openScp();
+		memLookup().blockTemp(classLookupReg ,null);
 		for (ClassDecl cd : getDeclss()){
-	    	cd.buildClassInfo();
-    	}
-	
-	    piglet.List<piglet.LabeledStmt> mainStatements = getMain().toPiglet();
+			cd.enterToClassGen();
+		}
+		piglet.List<piglet.LabeledStmt> stmts = buildClassInfo(classLookupReg);
+		for(piglet.LabeledStmt s : stmts)
+		{
+		mainStatements.add(s);
+		}
+		piglet.List<piglet.LabeledStmt> stmts2  = getMain().toPiglet();
+		for (piglet.LabeledStmt s : stmts2){
+			mainStatements.add(s);
+		}
+		memLookup().unblockTemp(classLookupReg );
+		memLookup().closeScp();
+
 	    piglet.List<piglet.Procedure> procedures = new piglet.List<piglet.Procedure>();
 	    for (ClassDecl cd : getDeclss()){
 	    	piglet.List<piglet.Procedure> declProcedures = cd.toPiglet();
@@ -16,27 +30,42 @@ aspect MiniJavaToPigletConversion{
 	    piglet.Program pigletP = new piglet.Program(mainStatements, procedures);
 	    return pigletP;
   	}
+
+	public void ClassDecl.enterToClassGen(){
+		classGen().openScp(this);
+		classGen().build(this);
+		classGen().closeScp();
+	}
+
+	public String MethodDecl.getMethodName(){
+		ClassDecl parent = (ClassDecl) this.getParent();
+		return CharConsts.getClassName(parent) + CharConsts.ELEMENT_SEPERATOR + CharConsts.getMethodName(this);
+	}
   	
-  	
-  	public void ClassDecl.buildClassInfo(){
-	  	classGen().openScp(this);
-	  	classGen().build(this);
-	  	classGen().closeScp();
-  	}
-  	
-  	protected void Statement.add(piglet.List<piglet.LabeledStmt> list, piglet.Stmt s){
-  		list.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),s));
-  	}
-  	protected void Exp.add(piglet.List<piglet.LabeledStmt> list, piglet.Stmt s){
-  		list.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),s));
-  	}
-  	protected void Op.add(piglet.List<piglet.LabeledStmt> list, piglet.Stmt s){
+  	public piglet.List<piglet.LabeledStmt> Program.buildClassInfo(int classLookupTableTemp){
+		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+		int arbeitsTemp = memLookup().getFreeTemp();
+		int numOfClassDecls = classGen().size();
+		add(result,new piglet.Move(new piglet.Temp(classLookupTableTemp), new piglet.HAlloc(new piglet.IntLiteral(4*numOfClassDecls))));
+		for(int i = 0; i < numOfClassDecls; i++){
+			ClassDecl c = classGen().getClassAtPos(i);
+			java.util.Set<java.util.Map.Entry<MethodDecl,Integer>> methods = classGen().methods(c);
+			add(result,new piglet.Move(new piglet.Temp(arbeitsTemp), new piglet.HAlloc(new piglet.IntLiteral(4*methods.size()))));
+			add(result,new piglet.HStore(new piglet.TempExp(new piglet.Temp(classLookupTableTemp)),4*i,new piglet.TempExp(new piglet.Temp(arbeitsTemp))));
+			for(java.util.Map.Entry<MethodDecl,Integer> e : methods){
+				add(result,new piglet.HStore(new piglet.TempExp(new piglet.Temp(arbeitsTemp)),4*e.getValue(),new piglet.LabelExp(new piglet.Label(e.getKey().getMethodName()))));
+			}
+		}
+		memLookup().unblockTemp(arbeitsTemp);
+		return result;
+	}
+
+  	protected void Code.add(piglet.List<piglet.LabeledStmt> list, piglet.Stmt s){
   		list.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),s));
   	}
   	
   	public piglet.List<piglet.LabeledStmt> MainClass.toPiglet(){
-  		memLookup().openScp();
-  		localLookup().openScp();
+		localLookup().openScp();
 		for (VarDecl v : getVariabless()){
 			localLookup().enter(v);
 		}
@@ -49,9 +78,8 @@ aspect MiniJavaToPigletConversion{
   				result.add(ls);
   			}
   		}
-  		localLookup().closeScp();
-  		memLookup().closeScp();
-  		return result;
+		localLookup().closeScp();
+		return result;
   	}
   	
   	public piglet.List<piglet.Procedure> ClassDecl.toPiglet(){
@@ -204,7 +232,8 @@ aspect MiniJavaToPigletConversion{
 		int arbeitstemp = memLookup().getFreeTemp();
 		int pos = memLookup().getFreeTemp();
 		int memAdress = memLookup().getFreeTemp();
-  		String noErrorLabel = labelGen().getLabel(new NoErrorLabel());
+		String noErrorLabel = labelGen().getLabel(new NoErrorLabel());
+		String errorLabel = labelGen().getLabel(new NoErrorLabel());
   		add(result,new piglet.Move(new piglet.Temp(memAdress), feld));
 		add(result,new piglet.CJump(new piglet.Minus(new piglet.IntLiteral(1), new piglet.Lt(new piglet.TempExp(new piglet.Temp(memAdress)),new piglet.IntLiteral(1))), new piglet.Label(noErrorLabel)));
 		add(result,new piglet.Err());
@@ -213,7 +242,9 @@ aspect MiniJavaToPigletConversion{
 		noErrorLabel = labelGen().getLabel(new NoErrorLabel());
 		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),new piglet.TempExp(new piglet.Temp(memAdress)),0));
 		add(result,new piglet.Move(new piglet.Temp(pos),getPosition().toPiglet()));
+		add(result,new piglet.CJump(new piglet.Lt(new piglet.TempExp(new piglet.Temp(pos)),new piglet.IntLiteral(0)), new piglet.Label(errorLabel)));
 		add(result,new piglet.CJump(new piglet.Minus(new piglet.IntLiteral(1), new piglet.Lt(new piglet.TempExp(new piglet.Temp(pos)),new piglet.TempExp(new piglet.Temp(arbeitstemp)))), new piglet.Label(noErrorLabel)));
+		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(errorLabel)), new piglet.Noop()));
 		add(result,new piglet.Err());
   		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(noErrorLabel)), new piglet.Noop()));
   		add(result,new piglet.Move(new piglet.Temp(pos),new piglet.Plus(new piglet.TempExp(new piglet.Temp(memAdress)),new piglet.Times(new piglet.Plus(new piglet.TempExp(new piglet.Temp(pos)), new piglet.IntLiteral(1)), new piglet.IntLiteral(4)))));
