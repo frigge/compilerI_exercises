@@ -1,8 +1,10 @@
 aspect MiniJavaToPigletConversion{	
 
-	//TEMP 0 ist this
-
 	syn piglet.Program Program.toPiglet() {
+		for (ClassDecl cd : getDeclss()){
+	    	cd.buildClassInfo();
+    	}
+	
 	    piglet.List<piglet.LabeledStmt> mainStatements = getMain().toPiglet();
 	    piglet.List<piglet.Procedure> procedures = new piglet.List<piglet.Procedure>();
 	    for (ClassDecl cd : getDeclss()){
@@ -13,6 +15,13 @@ aspect MiniJavaToPigletConversion{
     	}
 	    piglet.Program pigletP = new piglet.Program(mainStatements, procedures);
 	    return pigletP;
+  	}
+  	
+  	
+  	public void ClassDecl.buildClassInfo(){
+	  	classGen().openScp(this);
+	  	classGen().build(this);
+	  	classGen().closeScp();
   	}
   	
   	protected void Statement.add(piglet.List<piglet.LabeledStmt> list, piglet.Stmt s){
@@ -46,12 +55,16 @@ aspect MiniJavaToPigletConversion{
   	}
   	
   	public piglet.List<piglet.Procedure> ClassDecl.toPiglet(){
+  		memLookup().openScp();
 	  	localLookup().openClass(this);
+	  	classGen().openScp(this);
+  		labelGen().setSourroundings(getIdent().getIdent());
 		for (VarDecl v : getVariabless()) {
 			localLookup().enter(v);
 		}
-		
+		classGen().closeScp();
 	  	localLookup().closeClass();
+  		memLookup().closeScp();
   		return new piglet.List<piglet.Procedure>();
   	}
   	
@@ -187,29 +200,74 @@ aspect MiniJavaToPigletConversion{
   	}
 	public piglet.Exp ArrayExp.toPiglet(){
 		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-		piglet.Exp e = getFeld().toPiglet();
+		piglet.Exp feld = getFeld().toPiglet();
 		int arbeitstemp = memLookup().getFreeTemp();
 		int pos = memLookup().getFreeTemp();
-		add(result,new piglet.Move(new piglet.Temp(pos),getPos().toPiglet()));
-		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),e,0));
-		//add(result,new piglet.); TODO: finish this
-		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),e,0));
+		int memAdress = memLookup().getFreeTemp();
+  		String noErrorLabel = labelGen().getLabel(new NoErrorLabel());
+  		add(result,new piglet.Move(new piglet.Temp(memAdress), feld));
+		add(result,new piglet.CJump(new piglet.Minus(new piglet.IntLiteral(1), new piglet.Lt(new piglet.TempExp(new piglet.Temp(memAdress)),new piglet.IntLiteral(1))), new piglet.Label(noErrorLabel)));
+		add(result,new piglet.Err());
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(noErrorLabel)), new piglet.Noop()));
+  		
+		noErrorLabel = labelGen().getLabel(new NoErrorLabel());
+		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),new piglet.TempExp(new piglet.Temp(memAdress)),0));
+		add(result,new piglet.Move(new piglet.Temp(pos),getPosition().toPiglet()));
+		add(result,new piglet.CJump(new piglet.Minus(new piglet.IntLiteral(1), new piglet.Lt(new piglet.TempExp(new piglet.Temp(pos)),new piglet.TempExp(new piglet.Temp(arbeitstemp)))), new piglet.Label(noErrorLabel)));
+		add(result,new piglet.Err());
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(noErrorLabel)), new piglet.Noop()));
+  		add(result,new piglet.Move(new piglet.Temp(pos),new piglet.Plus(new piglet.TempExp(new piglet.Temp(memAdress)),new piglet.Times(new piglet.Plus(new piglet.TempExp(new piglet.Temp(pos)), new piglet.IntLiteral(1)), new piglet.IntLiteral(4)))));
+		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),new piglet.TempExp(new piglet.Temp(pos)),0));
 		memLookup().unblockTemp(arbeitstemp);
+		memLookup().unblockTemp(pos);
+		memLookup().unblockTemp(memAdress);
 		return new piglet.StmtExp(result,new piglet.TempExp(new piglet.Temp(arbeitstemp)));
 	}
 	public piglet.Exp LengthExp.toPiglet(){
+		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
 		piglet.Exp e = getFeld().toPiglet();
 		int arbeitstemp = memLookup().getFreeTemp();
-
-		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),e,0));
+		String noErrorLabel = labelGen().getLabel(new NoErrorLabel());
+  		add(result,new piglet.Move(new piglet.Temp(arbeitstemp), e));
+		add(result,new piglet.CJump(new piglet.Minus(new piglet.IntLiteral(1), new piglet.Lt(new piglet.TempExp(new piglet.Temp(arbeitstemp)),new piglet.IntLiteral(1))), new piglet.Label(noErrorLabel)));
+		add(result,new piglet.Err());
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(noErrorLabel)), new piglet.Noop()));
+		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),new piglet.TempExp(new piglet.Temp(arbeitstemp)),0));
 		memLookup().unblockTemp(arbeitstemp);
 		return new piglet.StmtExp(result,new piglet.TempExp(new piglet.Temp(arbeitstemp)));
 	}
 	public piglet.Exp MethodExp.toPiglet(){
-		//TODO Oehm...
-		//MethodExp	:Exp	::= Feld:Exp Method:Id Parameter:Exp*;
-		return new piglet.IntLiteral(0);
+		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
+		piglet.Exp e = getFeld().toPiglet();
+		int objectPointer = memLookup().getFreeTemp();
+		int arbeitstemp = memLookup().getFreeTemp();
+		String noErrorLabel = labelGen().getLabel(new NoErrorLabel());
+		add(result,new piglet.Move(new piglet.Temp(objectPointer), e));
+		add(result,new piglet.CJump(new piglet.Minus(new piglet.IntLiteral(1), new piglet.Lt(new piglet.TempExp(new piglet.Temp(objectPointer)),new piglet.IntLiteral(1))), new piglet.Label(noErrorLabel)));
+		add(result,new piglet.Err());
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(noErrorLabel)), new piglet.Noop()));
+		MethodDecl m;
+		piglet.List<piglet.Exp> params = new piglet.List<piglet.Exp>();
+		params.add(new piglet.TempExp(new piglet.Temp(objectPointer)));
+		try{
+			ClassDecl c = localLookup().getClassDecl();
+			List<Type> parameter = new List<Type>();
+			parameter.setParent(this);
+			for(Exp exp: getParameters()){
+					parameter.add(exp.getAndCheckType().clone());
+					params.add(exp.toPiglet());
+			}
+			m = (MethodDecl) lookup().lookupMethod(c, getMethod().getIdent(), parameter);
+		} catch (CloneNotSupportedException error) {
+			throw new UnsupportedOperationException("Do not know why unsupported :(", error);
+		}
+		int methodOffset = classGen().lookup(m);
+		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),new piglet.TempExp(new piglet.Temp(objectPointer)),0));
+		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),new piglet.TempExp(new piglet.Temp(arbeitstemp)),methodOffset));
+		add(result,new piglet.Move(new piglet.Temp(arbeitstemp), new piglet.Call(new piglet.TempExp(new piglet.Temp(arbeitstemp)),params)));
+		memLookup().unblockTemp(objectPointer);
+		memLookup().unblockTemp(arbeitstemp);
+		return new piglet.StmtExp(result,new piglet.TempExp(new piglet.Temp(arbeitstemp)));
 	}
 	public piglet.Exp TrueExp.toPiglet(){
 		return new piglet.IntLiteral(1);
