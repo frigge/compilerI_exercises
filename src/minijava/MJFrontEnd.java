@@ -12,7 +12,7 @@ class MJFrontEnd {
 //      inputFileName = "tests/MainTest.java";
 //      inputFileName = "tests/MainTestForLookup.java";
 //      inputFileName = "tests/MainTestForType.java";
-      inputFileName = "tests/MainTestForPiglet.java";
+      inputFileName = "tests/MainTestForPigletWithClassDecl.java";
     }
    else {
       System.out.println("MJFrontEnd: starting on file " + args[0]);

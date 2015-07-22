@@ -12,15 +12,15 @@ aspect Size{
 	
 	public abstract int Type.size();
 	public int IntArrType.size() {
-		return 4;
+		return 1;
 	}
 	public int BooleanType.size() {
-		return 4;
+		return 1;
 	}
 	public int IntType.size() {
-		return 4;
+		return 1;
 	}
 	public int IdType.size() {
-		return 4;
+		return 1;
 	}
 }
