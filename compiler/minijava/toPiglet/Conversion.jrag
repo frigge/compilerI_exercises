@@ -74,13 +74,13 @@ aspect MiniJavaToPigletConversion{
   		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
 		localLookup().openScp();
 		
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsSTART")),new piglet.Noop()));
+		if(getVariabless().getNumChild() > 0) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsSTART")),new piglet.Noop()));
   		for(VarDecl v : getVariabless()){
   			localLookup().enter(v);
   			memLookup().enter(v);
   			result.addAll(v.initPiglet());
   		}
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsENDE")),new piglet.Noop()));
+		if(getVariabless().getNumChild() > 0) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsENDE")),new piglet.Noop()));
 		
   		labelGen().setSourroundings(getIdent().getIdent());
   		for(Statement s : getStatementss()){
@@ -117,13 +117,13 @@ aspect MiniJavaToPigletConversion{
   			localLookup().enter(v);
   			memLookup().blockTemp(parameter++,v);
   		}
-		statements.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsSTART")),new piglet.Noop()));
+		if(getVarss().getNumChild() > 0) statements.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsSTART")),new piglet.Noop()));
   		for(VarDecl v : getVarss()){
   			localLookup().enter(v);
   			memLookup().enter(v);
   			statements.addAll(v.initPiglet());
   		}
-		statements.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsENDE")),new piglet.Noop()));
+		if(getVarss().getNumChild() > 0)  statements.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsENDE")),new piglet.Noop()));
   		String name = this.getMethodName();
   		for(Statement s : getStatementss()){
   			statements.addAll(s.toPiglet());
@@ -449,7 +449,7 @@ aspect MiniJavaToPigletConversion{
 		int classPointer = memLookup().getFreeTemp();
 		piglet.Exp alloc = new piglet.HAlloc(new piglet.IntLiteral(noetigeGroesse));
 		add(result, new piglet.Move(new piglet.Temp(objectPointer), alloc));
-		add(result, new piglet.HLoad(new piglet.Temp(classPointer), new piglet.TempExp(new piglet.Temp(classLookupReg())), classGen().getClassOffset(c)));
+		add(result, new piglet.HLoad(new piglet.Temp(classPointer), new piglet.TempExp(new piglet.Temp(classLookupReg())), 4*classGen().getClassOffset(c)));
 		add(result, new piglet.HStore(new piglet.TempExp(new piglet.Temp(objectPointer)), 0, new piglet.TempExp(new piglet.Temp(classPointer))));
 		//TODO move class-Object to first pointer
 		for(int i = 1; i < groesse; i++){

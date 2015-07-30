@@ -73,6 +73,7 @@ aspect PrettyPrint {
   	getLabel().print();
   	printer().append(" [" + getInteger().toString() +"] ");
   	getStmtsRet().print();
+  	printer().append("\n");
   }
   
   public abstract void Stmt.print();
