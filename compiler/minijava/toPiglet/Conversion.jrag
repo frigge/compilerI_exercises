@@ -223,30 +223,6 @@ aspect MiniJavaToPigletConversion{
   		return result;
   	}
   	
-  	protected piglet.Stmt Statement.store(Id ident, piglet.Exp value, piglet.Exp pos, int typeSize){
-		VarDecl decl = localLookup().lookup(ident);
-		piglet.Exp speicherExp;
-		if(decl.isStack()){
-			int speicherPos = memLookup().lookup(decl);
-			speicherExp =  new piglet.Plus(
-  			 		new piglet.TempExp(new piglet.Temp(speicherPos)), 
-  			 		new piglet.Times(
-  			 			new piglet.IntLiteral(typeSize),
-  			 			pos
-  			 		)
-  			 );
-		} else {
-			piglet.Exp speicherPos = new piglet.Plus(new piglet.TempExp(new piglet.Temp(0)),new piglet.IntLiteral(classGen().lookup(decl)));
-			speicherExp =  new piglet.Plus(
-  			 		speicherPos, 
-  			 		new piglet.Times(
-  			 			new piglet.IntLiteral(typeSize),
-  			 			pos
-  			 		)
-  			 );
-		}  		
-		return new piglet.HStore(speicherExp,0,value);
-  	}
   	protected piglet.Stmt Statement.store(Id ident, piglet.Exp value){
   		VarDecl decl = localLookup().lookup(ident);
 		if(decl.isStack()){
@@ -270,12 +246,44 @@ aspect MiniJavaToPigletConversion{
   		int TYPE_SIZE = 4;
   		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
 		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ArrayZuweisungSTART")),new piglet.Noop()));
-  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),store(getIdent(),getValue().toPiglet(),getPos().toPiglet(),TYPE_SIZE)));
+		int arbeitstemp = memLookup().getFreeTemp();
+		int adresse = memLookup().getFreeTemp();
+		int groesse = memLookup().getFreeTemp();
+		add(result,new piglet.Move(new piglet.Temp(arbeitstemp), getPos().toPiglet()));
+		String noErrorLabel = labelGen().getLabel(new NoErrorLabel());
+		piglet.Exp posKleinerNull = new piglet.Lt(new piglet.TempExp(new piglet.Temp(arbeitstemp)), new piglet.IntLiteral(0));
+		add(result,new piglet.CJump(posKleinerNull, new piglet.Label(noErrorLabel)));
+		add(result,new piglet.Err());
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(noErrorLabel)), new piglet.Noop()));
+		VarDecl v = localLookup().lookup(getIdent());
+		if(v.isStack()){
+			add(result, new piglet.Move(new piglet.Temp(adresse),new piglet.TempExp(new piglet.Temp(memLookup().lookup(v)))));
+		} else {
+	  		add(result,new piglet.HLoad(new piglet.Temp(adresse),new piglet.TempExp(new piglet.Temp(0)), classGen().lookup(v)));
+		}
+		noErrorLabel = labelGen().getLabel(new NoErrorLabel());
+		add(result, new piglet.CJump(new piglet.Lt(new piglet.IntLiteral(1), new piglet.TempExp(new piglet.Temp(adresse))), new piglet.Label(noErrorLabel)));
+		add(result, new piglet.Err());
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(noErrorLabel)), new piglet.Noop()));
+		add(result, new piglet.HLoad(new piglet.Temp(groesse), new piglet.TempExp(new piglet.Temp(adresse)), 0));
+		noErrorLabel = labelGen().getLabel(new NoErrorLabel());
+		add(result, new piglet.CJump(new piglet.Lt(new piglet.TempExp(new piglet.Temp(arbeitstemp)), new piglet.TempExp(new piglet.Temp(groesse))).invers(), new piglet.Label(noErrorLabel)));
+  		add(result, new piglet.Err());
+  		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(noErrorLabel)), new piglet.Noop()));
+  		
+  		piglet.Exp offset = new piglet.Times(new piglet.IntLiteral(TYPE_SIZE), new piglet.Plus(new piglet.IntLiteral(1), new piglet.TempExp(new piglet.Temp(arbeitstemp))));
+  		piglet.Exp position = new piglet.Plus(new piglet.TempExp(new piglet.Temp(adresse)), offset);
+  		
+  		add(result,new piglet.HStore(position, 0, getValue().toPiglet()));
+  		
+		memLookup().unblockTemp(arbeitstemp);
+		memLookup().unblockTemp(adresse);
+		memLookup().unblockTemp(groesse);
 		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ArrayZuweisungEnde")),new piglet.Noop()));
   		return result;
   	}
   	
-// ---------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // --- Expressions
 // ---------------------------------------------------------------------------------------------------------------------  	
   	
@@ -293,7 +301,7 @@ aspect MiniJavaToPigletConversion{
 		int pos = memLookup().getFreeTemp();
 		int memAdress = memLookup().getFreeTemp();
 		String noErrorLabel = labelGen().getLabel(new NoErrorLabel());
-		String errorLabel = labelGen().getLabel(new NoErrorLabel());
+		String errorLabel = labelGen().getLabel(new ErrorLabel());
   		add(result,new piglet.Move(new piglet.Temp(memAdress), feld));
 		add(result,new piglet.CJump(new piglet.Lt(new piglet.TempExp(new piglet.Temp(memAdress)),new piglet.IntLiteral(1)), new piglet.Label(noErrorLabel)));
 		add(result,new piglet.Err());
@@ -303,9 +311,9 @@ aspect MiniJavaToPigletConversion{
 		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),new piglet.TempExp(new piglet.Temp(memAdress)),0));
 		add(result,new piglet.Move(new piglet.Temp(pos),getPosition().toPiglet()));
 		piglet.Exp arrayPos = new piglet.TempExp(new piglet.Temp(pos));
-		piglet.Exp arrayPosKleinerNull = new piglet.Lt(new piglet.IntLiteral(0),arrayPos);
+		piglet.Exp arrayPosKleinerNull = new piglet.Lt(arrayPos,new piglet.IntLiteral(0));
 		add(result,new piglet.CJump(arrayPosKleinerNull.invers(), new piglet.Label(errorLabel)));
-		add(result,new piglet.CJump(new piglet.Lt(new piglet.TempExp(new piglet.Temp(pos)),new piglet.TempExp(new piglet.Temp(arbeitstemp))), new piglet.Label(noErrorLabel)));
+		add(result,new piglet.CJump(new piglet.Lt(new piglet.TempExp(new piglet.Temp(pos)),new piglet.TempExp(new piglet.Temp(arbeitstemp))).invers(), new piglet.Label(noErrorLabel)));
 		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(errorLabel)), new piglet.Noop()));
 		add(result,new piglet.Err());
   		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(noErrorLabel)), new piglet.Noop()));
