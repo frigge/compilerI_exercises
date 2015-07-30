@@ -178,6 +178,6 @@ aspect PrettyPrint {
   	printer().append(getLabel());
   }
   public void Temp.print() {
-  	printer().append("TEMP(" + getNumber().toString()+")");
+  	printer().append("TEMP " + getNumber().toString()+" ");
   }
 }

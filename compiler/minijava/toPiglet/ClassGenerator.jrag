@@ -93,7 +93,7 @@ aspect ClassGeneration{
 						infos.remove(oldDecl);
 						infos.put(m,foundPos);
 					} else {
-						infos.put(m,pos*4);
+						infos.put(m,pos);
 						pos++;
 					}
 				}

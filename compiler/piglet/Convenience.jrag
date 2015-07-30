@@ -5,4 +5,7 @@ aspect Conv{
 		}
 	}
 
+	public Exp Exp.invers(){
+		return new Minus(new IntLiteral(1),this);
+	}
 }
