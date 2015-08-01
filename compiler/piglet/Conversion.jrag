@@ -2,10 +2,12 @@ aspect PigletToSpigletConversion{
 
 	syn spiglet.Program Program.toSpiglet(){
 		spiglet.List<spiglet.LabeledStmt> mainStatements = new spiglet.List<spiglet.LabeledStmt>();
+		tempLookup().enterScope();
 		for(LabeledStmt s : getStmtss()){
 			mainStatements.addAll(s.toSpiglet());
 		}
 		tempLookup().leaveScope();
+		tempLookup().clear();
 	    spiglet.List<spiglet.Procedure> procedures = new spiglet.List<spiglet.Procedure>();
 	    for(Procedure p : getProcss()){
 			procedures.add(p.toSpiglet());
@@ -26,6 +28,7 @@ aspect PigletToSpigletConversion{
 	}
 	
 	public spiglet.Procedure Procedure.toSpiglet(){
+		tempLookup().enterScope();
 		spiglet.Label l = getLabel().toSpiglet();
 		Integer params = getInteger();
 		
@@ -39,6 +42,7 @@ aspect PigletToSpigletConversion{
 		spiglet.StmtExp result = new spiglet.StmtExp(code, expression);
 		
 		tempLookup().leaveScope();
+		tempLookup().clear();
 		return new spiglet.Procedure(l, params, result);
 	}
 	
@@ -64,7 +68,9 @@ aspect PigletToSpigletConversion{
 	public spiglet.List<spiglet.LabeledStmt> CJump.toSpiglet(){
 		spiglet.List<spiglet.LabeledStmt> code = new spiglet.List<spiglet.LabeledStmt>();
 		int arbeitsTemp = tempLookup().getFreeNum();
+		tempLookup().enterScope();
 		add(code, new spiglet.Move(new spiglet.Temp(arbeitsTemp), getCond().toSpiglet(code)));
+		tempLookup().leaveScope();
 		add(code, new spiglet.CJump(new spiglet.Temp(arbeitsTemp), getLabel().toSpiglet()));
 		tempLookup().unblock(arbeitsTemp);
 		return code;
@@ -80,8 +86,12 @@ aspect PigletToSpigletConversion{
 		spiglet.List<spiglet.LabeledStmt> code = new spiglet.List<spiglet.LabeledStmt>();
 		int adresse = tempLookup().getFreeNum();
 		int wert = tempLookup().getFreeNum();
+		tempLookup().enterScope();
 		add(code, new spiglet.Move(new spiglet.Temp(adresse), getAddr().toSpiglet(code)));
+		tempLookup().leaveScope();
+		tempLookup().enterScope();
 		add(code, new spiglet.Move(new spiglet.Temp(wert), getValue().toSpiglet(code)));
+		tempLookup().leaveScope();
 		add(code, new spiglet.HStore(new spiglet.Temp(adresse), getOffset(), new spiglet.Temp(wert)));
 		
 		tempLookup().unblock(adresse);
@@ -92,7 +102,9 @@ aspect PigletToSpigletConversion{
 	public spiglet.List<spiglet.LabeledStmt> HLoad.toSpiglet(){
 		spiglet.List<spiglet.LabeledStmt> code = new spiglet.List<spiglet.LabeledStmt>();
 		int adresse = tempLookup().getFreeNum();
+		tempLookup().enterScope();
 		add(code, new spiglet.Move(new spiglet.Temp(adresse), getAddr().toSpiglet(code)));
+		tempLookup().leaveScope();
 		add(code, new spiglet.HLoad(getDest().toSpiglet(), new spiglet.Temp(adresse), getOffset()));
 		
 		tempLookup().unblock(adresse);
@@ -101,13 +113,18 @@ aspect PigletToSpigletConversion{
 	
 	public spiglet.List<spiglet.LabeledStmt> Move.toSpiglet(){
 		spiglet.List<spiglet.LabeledStmt> code = new spiglet.List<spiglet.LabeledStmt>();
-		add(code, new spiglet.Move(getDest().toSpiglet(), getSource().toSpiglet(code)));
+		spiglet.Temp t = getDest().toSpiglet();
+		tempLookup().enterScope();
+		add(code, new spiglet.Move(t, getSource().toSpiglet(code)));
+		tempLookup().leaveScope();
 		return code;
 	}
 	
 	public spiglet.List<spiglet.LabeledStmt> Print.toSpiglet(){
 		spiglet.List<spiglet.LabeledStmt> code = new spiglet.List<spiglet.LabeledStmt>();
+		tempLookup().enterScope();
 		add(code, new spiglet.Print(getValue().toSpiglet(code)));
+		tempLookup().leaveScope();
 		return code;
 	}
 	

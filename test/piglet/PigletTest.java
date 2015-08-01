@@ -13,7 +13,7 @@ import beaver.Parser.Exception;
 
 public class PigletTest {
 	@Test
-	public void testBaseProgram() throws IOException, Exception, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException {
+	public void testBaseProgram() throws IOException, Exception, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, InstantiationException {
 		File f = new File("tests/MainTestForPiglet.java");
 		List<String> result = TestHelper.getOutput(f);
 		assertEquals(1, result.size());
