@@ -12,9 +12,10 @@ class MJFrontEnd {
 //      inputFileName = "tests/MainTest.java";
 //      inputFileName = "tests/MainTestForLookup.java";
 //      inputFileName = "tests/MainTestForType.java";
+//	    inputFileName = "tests/MainTestForPiglet.java";
 //      inputFileName = "tests/MainTestForPigletWithClassDecl.java";
-//      inputFileName = "tests/MainTestForPiglet.java";
-      inputFileName = "tests/MainTestForPigletWithMultipleClassDecls.java";
+//      inputFileName = "tests/MainTestForPigletWithMultipleClassDecls.java";
+      inputFileName = "tests/MainTestForPigletArray.java";
     }
    else {
       System.out.println("MJFrontEnd: starting on file " + args[0]);
@@ -46,7 +47,10 @@ class MJFrontEnd {
       if(ast.error().isEmpty()){
 //	      System.out.println("");
 //	      System.out.println("Piglet: ");
-	      System.out.println(ast.toPiglet().print().getString());
+    	  piglet.Program piglet = ast.toPiglet();
+//	      System.out.println(piglet.print().getString());
+    	  spiglet.Program spiglet = piglet.toSpiglet();
+    	  System.out.println(spiglet.print().getString());
       }
     }
     catch (FileNotFoundException e) {
