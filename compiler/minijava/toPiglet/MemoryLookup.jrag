@@ -101,7 +101,7 @@ aspect MemoryLookup{
 					for(int j = nextFreeInt; j<i; j++){
 						unblockedIntegers.add(j);
 					}
-					nextFreeInt++;
+					nextFreeInt = i+1;
 				}
 			}
 		}

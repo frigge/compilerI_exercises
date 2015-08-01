@@ -53,8 +53,10 @@ aspect checking {
 		}
 	    for (Statement s : getStatementss()) 
 	    	s.typeAndLocalNameAnalysis();
-		Type returnType = getReturnExp().getAndCheckType();
-		if(!returnType.equals(getT())) addError("Return Type passt nicht zum definierten Typ (Zeile "+getFirstLine()+")");
+    	try{
+			Type returnType = getReturnExp().getAndCheckType();
+			if(!returnType.equals(getT())) addError("Return Type passt nicht zum definierten Typ (Zeile "+getFirstLine()+")");
+	  	} catch (IllegalStateException e){};
 	  	localLookup().closeScp();
 	}
   
