@@ -26,13 +26,13 @@ public class TestHelper {
 		return p.toSpiglet();
 	}
 	
-	public static List<String> getOutput(File code) throws FileNotFoundException, IOException, Exception, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException{
+	public static List<String> getOutput(File code) throws FileNotFoundException, IOException, Exception, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, InstantiationException{
 		Program p = TestHelper.buildTest(new FileInputStream(code));
 		List<String> result = TestHelper.getOutput(p);
 		return result;
 	}
 	
-	public static List<String> getOutput(Program p) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException{
+	public static List<String> getOutput(Program p) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, InstantiationException{
 		return piglet.TestHelper.getOutput(p.toString());
 	}
 }

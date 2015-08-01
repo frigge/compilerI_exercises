@@ -13,14 +13,20 @@ import java.io.OutputStreamWriter;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import syntaxtree.Node;
+import visitor.GJPigletInterpreter;
 import beaver.Parser.Exception;
 
 public class TestHelper {
+	
+	static Object pigletParser = null;
+	
 	public static Program buildTest(InputStream stream) throws IOException, Exception {
 		minijava.Program p = ex5.TestHelper.buildTest(stream);
 		return p.toPiglet();
@@ -36,13 +42,13 @@ public class TestHelper {
 		return p.toPiglet();
 	}
 	
-	public static List<String> getOutput(File code) throws FileNotFoundException, IOException, Exception, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException{
+	public static List<String> getOutput(File code) throws FileNotFoundException, IOException, Exception, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, InstantiationException{
 		Program p = TestHelper.buildTest(new FileInputStream(code));
 		List<String> result = TestHelper.getOutput(p);
 		return result;
 	}
 	
-	public static List<String> getOutput(String pigletCode) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException{
+	public static List<String> getOutput(String pigletCode) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, InstantiationException{
 		PrintStream sout = System.out;
 		InputStream sin = System.in;
 		
@@ -60,7 +66,19 @@ public class TestHelper {
 		Method s = Class.forName("PgInterpreter").getMethod("main", String[].class);
 		SendTextRunnable str = new SendTextRunnable(pigletCode, inPipeOut);
 		new Thread(str).start();
-		s.invoke(null, new Object[]{params});
+		Class pigletParserClass = Class.forName("PigletParser");
+		if(pigletParser == null){
+			Constructor parserConstructor = pigletParserClass.getConstructor(InputStream.class);
+			pigletParser = parserConstructor.newInstance(System.in);
+		} else {
+			Method reinit = pigletParserClass.getMethod("ReInit", InputStream.class);
+			reinit.invoke(pigletParser, System.in);
+		}
+		Method goal = pigletParserClass.getMethod("Goal");
+		Node root = (Node) goal.invoke(pigletParser, new Object[]{});
+		
+		 root.accept(new GJPigletInterpreter("MAIN",null,root),root);
+		sin.close();
 		System.setOut(sout);
 		System.setIn(sin);
 		out.flush();
@@ -74,7 +92,7 @@ public class TestHelper {
 		return result;
 	}
 	
-	public static List<String> getOutput(Program p) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException{
+	public static List<String> getOutput(Program p) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, InstantiationException{
 		return getOutput(p.toString());
 	}
 	
