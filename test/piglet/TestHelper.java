@@ -42,7 +42,7 @@ public class TestHelper {
 		return result;
 	}
 	
-	public static List<String> getOutput(Program p) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException{
+	public static List<String> getOutput(String pigletCode) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException{
 		PrintStream sout = System.out;
 		InputStream sin = System.in;
 		
@@ -58,7 +58,7 @@ public class TestHelper {
 		
 		String[] params = {};
 		Method s = Class.forName("PgInterpreter").getMethod("main", String[].class);
-		SendTextRunnable str = new SendTextRunnable(p.toString(), inPipeOut);
+		SendTextRunnable str = new SendTextRunnable(pigletCode, inPipeOut);
 		new Thread(str).start();
 		s.invoke(null, new Object[]{params});
 		System.setOut(sout);
@@ -72,6 +72,10 @@ public class TestHelper {
 		}
 		in.close();
 		return result;
+	}
+	
+	public static List<String> getOutput(Program p) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException{
+		return getOutput(p.toString());
 	}
 	
 	private static class SendTextRunnable implements Runnable {
