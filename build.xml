@@ -5,11 +5,13 @@
   <property name="spiglet.package" value="spiglet"/>
   <property name="piglet.package" value="piglet"/>
   <property name="minijava.package" value="minijava"/>
+  <property name="kanga.package" value="kanga"/>
 
   <property name="src.dir" value="src"/>
   <property name="minijava.grammar.dir" value="compiler/minijava"/>
   <property name="piglet.grammar.dir" value="compiler/piglet"/>
   <property name="spiglet.grammar.dir" value="compiler/spiglet"/>
+  <property name="kanga.grammar.dir" value="compiler/kanga"/>
   <property name="gen.dir" value="${basedir}/gen"/>
   <property name="classes.dir" value="bin"/>
   <property name="tools"   value="tools"/>
@@ -72,7 +74,7 @@
         </fileset>
       </jastadd>
   </target>
-  
+	  
   <target name="spiglet.jastadd">
     <jastadd package="${spiglet.package}" grammar="${spiglet.grammar.dir}" outdir="${gen.dir}" beaver="true" debug="true">
         <fileset dir=".">
@@ -82,11 +84,22 @@
         </fileset>
       </jastadd>
   </target>
+	  
+  <target name="kanga.jastadd">
+    <jastadd package="${kanga.package}" grammar="${kanga.grammar.dir}" outdir="${gen.dir}" beaver="true" debug="true">
+        <fileset dir=".">
+          <include name="${kanga.grammar.dir}/*.ast"/>
+		  <include name="${kanga.grammar.dir}/*.jrag"/>
+		  <include name="${kanga.grammar.dir}/*.jrag"/>
+        </fileset>
+      </jastadd>
+  </target>
 
   <target name="preprocess" depends="clean,prepair,
       spiglet.jastadd,
       piglet.jastadd,
       minijava.jastadd,
+      kanga.jastadd,
       spiglet.parser,spiglet.scanner,
       piglet.parser,piglet.scanner,
       minijava.parser,minijava.scanner">
