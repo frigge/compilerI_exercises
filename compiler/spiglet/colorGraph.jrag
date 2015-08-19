@@ -1,0 +1,69 @@
+aspect GraphColoring {
+
+	public class Graph<T>{
+		private java.util.Set<Neighbourhood<T>> graph = new java.util.HashSet<Neighbourhood<T>>();
+		
+		
+		
+		
+		private static class Neighbourhood<T>{
+			Node node;
+			java.util.Set<Node<T>> neighbours = new java.util.HashSet<Node<T>>();
+		}
+		
+		private static class Node<T>{
+			private T value;
+			private Integer color;
+			
+			public Node(T t){
+				value = t;
+			}
+			
+			public T getValue(){
+				return value;
+			}
+			
+			public void setColor(int i){
+				color = i;
+			}
+			
+			public Integer getColor(){
+				return color;
+			}
+			
+			@Override
+			public int hashCode() {
+				final int prime = 31;
+				int result = 1;
+				result = prime * result
+						+ ((color == null) ? 0 : color.hashCode());
+				result = prime * result
+						+ ((value == null) ? 0 : value.hashCode());
+				return result;
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				if (this == obj)
+					return true;
+				if (obj == null)
+					return false;
+				if (getClass() != obj.getClass())
+					return false;
+				Node other = (Node) obj;
+				if (color == null) {
+					if (other.color != null)
+						return false;
+				} else if (!color.equals(other.color))
+					return false;
+				if (value == null) {
+					if (other.value != null)
+						return false;
+				} else if (!value.equals(other.value))
+					return false;
+				return true;
+			}
+		}
+	}
+
+}

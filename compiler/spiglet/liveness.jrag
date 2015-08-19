@@ -1,4 +1,16 @@
 aspect Liveness {
+	syn lazy LivenessAnalyse Program.liveness(){
+		LivenessAnalyse result = new LivenessAnalyse();
+		
+		result.addCode(getStmtss());
+		for(Procedure p : getProcss())	result.addCode(p.getStmtsRet());
+		
+		result.calculate();
+		
+		return result;
+	}
+
+
 	class Block{
 		private java.util.List<Stmt> blockCode = new java.util.ArrayList<Stmt>();
 		
@@ -17,6 +29,10 @@ aspect Liveness {
 		public void addCode(Stmt stmt){
 			blockCode.add(stmt);
 			stmt.addGenKill(gen,kill);
+		}
+		
+		public void addCode(Exp e){
+			e.addGen(gen,kill);
 		}
 		
 		public java.util.Set<Temp> getIn(){
@@ -44,11 +60,10 @@ aspect Liveness {
 	
 	class LivenessAnalyse{
 		private java.util.Map<Label,Block> labelToBlock = new java.util.HashMap<Label,Block>();
-		private java.util.Map<Stmt,Block> codeToBlock = new java.util.HashMap<Stmt,Block>();
 		private java.util.Set<Block> blocks = new java.util.HashSet<Block>();
 		private Block currentBlock;
 		
-		public void calculateInAndOut(){
+		public void calculate(){
 			boolean changed = true;
 			while(changed){
 				changed = false;
@@ -110,7 +125,6 @@ aspect Liveness {
 				Block block = getCurrentBlock(createNewBlock, linkBlock, l);
 				Stmt stmt = labeledStmt.getStmt();
 				block.addCode(stmt);
-				codeToBlock.put(stmt,block);
 				if(stmt instanceof CJump){
 					createNewBlock = true;
 					linkBlock = true;
@@ -124,6 +138,11 @@ aspect Liveness {
 					createNewBlock=false;
 				}
 			}
+		}
+		
+		public void addCode(StmtExp e){
+			addCode(e.getStmtss());
+			getCurrentBlock(false,false, null).addCode(e.getRetExp());
 		}
 	}
 
@@ -150,11 +169,18 @@ aspect Liveness {
 			return false;
 		return true;
 	}	
-	
+	public Object Temp.getTempContext(){
+		ASTNode<?> parent = getParent();
+		while(parent != null && !(parent instanceof Procedure || parent instanceof Program)){
+			parent = parent.getParent();
+		}
+		return parent;
+	}
 	public int Temp.hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((getNumber() == null) ? 0 : getNumber().hashCode());
+		result = prime * result + getTempContext().hashCode();
 		return result;
 	}
 	public boolean Temp.equals(Object obj) {
@@ -168,8 +194,11 @@ aspect Liveness {
 		if (getNumber() == null) {
 			if (other.getNumber() != null)
 				return false;
-		} else if (!getNumber().equals(other.getNumber()))
+		} else if (!getNumber().equals(other.getNumber())){
 			return false;
+		} else if (!getTempContext().equals(other.getTempContext())){
+			return false;
+		}
 		return true;
 	}
 	
