@@ -1,0 +1,232 @@
+aspect Liveness {
+	class Block{
+		private java.util.List<Stmt> blockCode = new java.util.ArrayList<Stmt>();
+		
+		private java.util.Set<Block> successors = new java.util.HashSet<Block>();
+		
+		private java.util.Set<Temp> gen = new java.util.HashSet<Temp>();
+		private java.util.Set<Temp> kill = new java.util.HashSet<Temp>();
+		
+		private java.util.Set<Temp> in = new java.util.HashSet<Temp>();
+		private java.util.Set<Temp> out = new java.util.HashSet<Temp>();
+		
+		public void addSuccessor(Block suc){
+			successors.add(suc);
+		}
+		
+		public void addCode(Stmt stmt){
+			blockCode.add(stmt);
+			stmt.addGenKill(gen,kill);
+		}
+		
+		public java.util.Set<Temp> getIn(){
+			return in;
+		}
+		
+		public java.util.Set<Temp> getOut(){
+			return out;
+		}
+		
+		public boolean recalculate(){
+			java.util.Set<Temp> newOut = new java.util.HashSet<Temp>();
+			for(Block suc : successors){
+				newOut.addAll(suc.getIn());
+			}
+			in.clear();
+			in.addAll(newOut);
+			in.remove(kill);
+			in.addAll(gen);
+			boolean result = !newOut.equals(out);
+			out = newOut;
+			return result; 
+		}
+	}
+	
+	class LivenessAnalyse{
+		private java.util.Map<Label,Block> labelToBlock = new java.util.HashMap<Label,Block>();
+		private java.util.Map<Stmt,Block> codeToBlock = new java.util.HashMap<Stmt,Block>();
+		private java.util.Set<Block> blocks = new java.util.HashSet<Block>();
+		private Block currentBlock;
+		
+		public void calculateInAndOut(){
+			boolean changed = true;
+			while(changed){
+				changed = false;
+				for(Block b : blocks){
+					if(b.recalculate()){
+						changed = true;
+					}
+				}
+			}
+		}
+		
+		private Block getBlock(Label label){
+			if(labelToBlock.containsKey(label)){
+				return labelToBlock.get(label);
+			} else {
+				Block res = new Block();
+				labelToBlock.put(label, res);
+				return res;
+			}
+		}
+		
+		private Block getCurrentBlock(boolean createNewBlock, boolean linkBlock, Label l){
+			Block b = null;
+			Block newBlock = null;
+			if(l != null){
+				b = getBlock(l);
+			} else {
+				b  = new Block();
+			}
+			if(b != null){
+				if(linkBlock || !createNewBlock){
+					currentBlock.addSuccessor(b);
+				}
+				newBlock = b;
+			}
+			if(newBlock == null) {
+				newBlock = new Block();
+			}
+			if(newBlock != null){
+				currentBlock = newBlock;
+				blocks.add(newBlock);
+			}
+			return currentBlock;
+		}
+		
+		public void addCode(List<LabeledStmt> code){
+			boolean createNewBlock = false;
+			boolean linkBlock = false;
+			boolean jumpTillLabel = false;
+			for(LabeledStmt labeledStmt: code){
+				Label l = labeledStmt.getLabel();
+/*				if(jumpTillLabel){
+					if(l == null){
+						continue;
+					} else {
+						jumpTillLabel = false;
+					}
+				}*/
+				Block block = getCurrentBlock(createNewBlock, linkBlock, l);
+				Stmt stmt = labeledStmt.getStmt();
+				block.addCode(stmt);
+				codeToBlock.put(stmt,block);
+				if(stmt instanceof CJump){
+					createNewBlock = true;
+					linkBlock = true;
+				} else if (stmt instanceof Jump){
+					createNewBlock = true;
+					linkBlock = false;
+				} else if (stmt instanceof Err){
+					jumpTillLabel = true;
+				} else {
+					linkBlock = false;
+					createNewBlock=false;
+				}
+			}
+		}
+	}
+
+
+
+	public int Label.hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((getLabel() == null) ? 0 : getLabel().hashCode());
+		return result;
+	}
+	public boolean Label.equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Label other = (Label) obj;
+		if (getLabel() == null) {
+			if (other.getLabel() != null)
+				return false;
+		} else if (!getLabel().equals(other.getLabel()))
+			return false;
+		return true;
+	}	
+	
+	public int Temp.hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((getNumber() == null) ? 0 : getNumber().hashCode());
+		return result;
+	}
+	public boolean Temp.equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Temp other = (Temp) obj;
+		if (getNumber() == null) {
+			if (other.getNumber() != null)
+				return false;
+		} else if (!getNumber().equals(other.getNumber()))
+			return false;
+		return true;
+	}
+	
+	public abstract void Stmt.addGenKill(java.util.Set<Temp> gen, java.util.Set<Temp> kill);
+	public void Stmt.addGen(Temp t, java.util.Set<Temp> gen, java.util.Set<Temp> kill){
+		if(!kill.contains(t)){
+			gen.add(t);
+		}
+	}
+	public void Stmt.addKill(Temp t, java.util.Set<Temp> gen, java.util.Set<Temp> kill){
+		kill.add(t);
+	}
+	
+	public void Noop.addGenKill(java.util.Set<Temp> gen, java.util.Set<Temp> kill){}
+	public void Err.addGenKill(java.util.Set<Temp> gen, java.util.Set<Temp> kill){}
+	public void CJump.addGenKill(java.util.Set<Temp> gen, java.util.Set<Temp> kill){
+		addGen(getCond(),gen,kill);		
+	}
+	public void Jump.addGenKill(java.util.Set<Temp> gen, java.util.Set<Temp> kill){}
+	public void HStore.addGenKill(java.util.Set<Temp> gen, java.util.Set<Temp> kill){
+		addGen(getAddr(),gen,kill);		
+		addGen(getValue(),gen,kill);		
+	}
+	public void HLoad.addGenKill(java.util.Set<Temp> gen, java.util.Set<Temp> kill){
+		addGen(getAddr(),gen,kill);		
+		addKill(getDest(),gen,kill);		
+	}
+	public void Move.addGenKill(java.util.Set<Temp> gen, java.util.Set<Temp> kill){
+		getSource().addGen(gen,kill);	
+		addKill(getDest(),gen,kill);		
+	}
+	public void Print.addGenKill(java.util.Set<Temp> gen, java.util.Set<Temp> kill){
+		getValue().addGen(gen,kill);	
+	}
+	
+	public abstract void Exp.addGen(java.util.Set<Temp> gen, java.util.Set<Temp> kill);
+	public void Exp.addGen(Temp t, java.util.Set<Temp> gen, java.util.Set<Temp> kill){
+		if(!kill.contains(t)){
+			gen.add(t);
+		}
+	}
+	public void Call.addGen(java.util.Set<Temp> gen, java.util.Set<Temp> kill){
+		getName().addGen(gen,kill);
+		for(Temp t : getParams()){
+			addGen(t,gen,kill);
+		}
+	}
+	public void HAlloc.addGen(java.util.Set<Temp> gen, java.util.Set<Temp> kill){
+		getSize().addGen(gen,kill);
+	}
+	public void TempExp.addGen(java.util.Set<Temp> gen, java.util.Set<Temp> kill){
+		addGen(getTemp(),gen,kill);
+	}
+	public void LabelExp.addGen(java.util.Set<Temp> gen, java.util.Set<Temp> kill){}
+	public void IntLiteral.addGen(java.util.Set<Temp> gen, java.util.Set<Temp> kill){}
+	public void Binop.addGen(java.util.Set<Temp> gen, java.util.Set<Temp> kill){
+		addGen(getLeft(),gen,kill);
+		getRight().addGen(gen,kill);
+	}
+}
