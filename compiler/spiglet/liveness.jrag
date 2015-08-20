@@ -63,6 +63,10 @@ aspect Liveness {
 		private java.util.Set<Block> blocks = new java.util.HashSet<Block>();
 		private Block currentBlock;
 		
+		public java.util.Set<Block> getBlocks(){
+			return blocks;
+		}
+		
 		public void calculate(){
 			boolean changed = true;
 			while(changed){
@@ -169,12 +173,12 @@ aspect Liveness {
 			return false;
 		return true;
 	}	
-	public Object Temp.getTempContext(){
+	public TempContext Temp.getTempContext(){
 		ASTNode<?> parent = getParent();
-		while(parent != null && !(parent instanceof Procedure || parent instanceof Program)){
+		while(parent != null && !(parent instanceof TempContext)){
 			parent = parent.getParent();
 		}
-		return parent;
+		return parent == null ? null : (TempContext) parent;
 	}
 	public int Temp.hashCode() {
 		final int prime = 31;

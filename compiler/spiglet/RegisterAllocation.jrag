@@ -1,0 +1,18 @@
+aspect RegisterAllocation {
+	//TODO
+	class TempToRegister{
+		private java.util.Map<Temp,TempInfo> infos = new java.util.HashMap<Temp,TempInfo>();
+		
+		public TempToRegister(java.util.Map<Temp, ColorInformation<Temp>> info){
+
+		}
+		
+		public int spill(Temp t){
+		
+		}
+		
+		public Temp load(Temp t){
+		
+		}
+	}
+}

@@ -1,7 +1,8 @@
-Program				::= Stmts:LabeledStmt* Procs:Procedure*;
+TempContext;
+Program:TempContext	::= Stmts:LabeledStmt* Procs:Procedure*;
 
 LabeledStmt			::= [Label] Stmt:Stmt;
-Procedure			::= Label <Params:Integer> StmtsRet:StmtExp;
+Procedure:TempContext ::= Label <Params:Integer> StmtsRet:StmtExp;
 abstract Stmt;
 Noop:Stmt;
 Err:Stmt;
