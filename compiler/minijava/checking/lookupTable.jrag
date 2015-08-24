@@ -127,26 +127,17 @@ aspect lookupTable{
 	}
 	
 	public class MethodLookupIdentification extends LookupIdentification{
-		java.util.List<Type> parameter;
 		String name;
 		ClassDecl nesting;
 		
 		public MethodLookupIdentification(ClassDecl nesting, MethodDecl decl){
 			this.nesting = nesting;
-			parameter = new java.util.ArrayList<Type>();
-			for(VarDecl p: decl.getParamss()){
-				parameter.add(p.getT());
-			}
 			this.name = CharConsts.getClassName(nesting) + CharConsts.ELEMENT_SEPERATOR + CharConsts.getMethodName(decl);
 		}
 		
 		public MethodLookupIdentification(ClassDecl nesting, String name, List<Type> params){
 			this.name = CharConsts.getClassName(nesting) + CharConsts.ELEMENT_SEPERATOR + CharConsts.getMethodName(name);
 			this.nesting = nesting;
-			parameter = new java.util.ArrayList();
-			for(Type t: params){
-				parameter.add(t);
-			}
 		}
 
 
@@ -154,9 +145,6 @@ aspect lookupTable{
 		public String getName(){
 			StringBuilder b = new StringBuilder();
 			b.append(name).append("(");
-			for(Type t: parameter){
-				b.append(t.typeValue()).append(",");
-			}
 			b.append(")");
 			return b.toString();
 		}
@@ -165,12 +153,6 @@ aspect lookupTable{
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			for (Type type : parameter) {
-				while(type.supertype() != null){
-					type = type.supertype();
-				}
-				result = prime * result + type.typeValue().hashCode();
-			}
 			result = prime * result + ((name == null) ? 0 : name.hashCode());
 			return result;
 		}
@@ -189,41 +171,12 @@ aspect lookupTable{
 					return false;
 			} else if (!name.equals(other.name))
 				return false;
-			if(parameter.size() != other.parameter.size())
-				return false;
 			if (nesting == null) {
 				if (other.nesting != null)
 					return false;
 			} else if (!nesting.equals(other.nesting))
 				return false;
-			boolean oInstanceOfT = false;
-			boolean tInstanceOfO = false;
-			boolean different = false;
-			for (int i = 0; i < parameter.size() && !different; i++) {
-				Type t = parameter.get(i);
-				Type o = parameter.get(i);
-				
-				if(!t.equals(o)){
-					if(t.instanceOf(o)){
-						tInstanceOfO = true;
-					} else if(o.instanceOf(t)){
-						oInstanceOfT = true;
-					} else {
-						different = true;
-					}
-				}
-			}
-			if(different){
-				return false;	//Eindeutig unterscheidbar
-			} else {
-				if(oInstanceOfT && tInstanceOfO){
-					return true;	//Nicht eindeutig unterscheidbar
-				} else if(oInstanceOfT || tInstanceOfO){
-					return false;	//Man kann immer die richtige auswählen
-				} else {
-					return true;	//Identisch
-				}
-			}
+			return true;
 		}
 	}
 }
