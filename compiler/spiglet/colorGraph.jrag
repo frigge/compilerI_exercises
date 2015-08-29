@@ -2,8 +2,8 @@ aspect GraphColoring {
 	syn lazy Graph<Temp> Program.graph(LivenessAnalyse l, int noOfColors){
 		Graph<Temp> graph = new Graph<Temp>();
 		for(Block b : l.getBlocks()){
-			for(Temp t1: b.getIn()){
-				for(Temp t2: b.getIn()){
+			for(Temp t1: b.getAlive()){
+				for(Temp t2: b.getAlive()){
 					graph.addEdge(t1,t2);
 				}
 			}
@@ -42,12 +42,17 @@ aspect GraphColoring {
 		}
 		
 		public void colorize(int noOfColors){
-			java.util.Map<T,Neighbourhood<T>> newGraph = new java.util.HashMap<T,Neighbourhood<T>>();
 			for(Neighbourhood<T> n : graph.values()){
 				Integer color = n.getFreeColor(noOfColors);
-				//TODO
+				if(color == null){
+					java.util.Set<Node<T>> spillings = new java.util.HashSet<Node<T>>();
+					color = n.getLeastSpilledNeighbourColor(noOfColors, spillings);
+					for (Node<T> node : spillings) {
+						n.getNode().addSpilling(node);
+					}
+				}
+				n.getNode().setColor(color);
 			}
-			
 		}
 		
 		public java.util.Map<T, ColorInformation<T>> getColorMap(){
@@ -81,6 +86,38 @@ aspect GraphColoring {
 				return node;
 			}
 			
+			public int getLeastSpilledNeighbourColor(int noOfColors, java.util.Set<Node<T>> resultSet){
+				java.util.List<java.util.Set<Node<T>>> values = new java.util.ArrayList<java.util.Set<Node<T>>>(noOfColors);
+				for(int i = 0; i < noOfColors; i++){
+					values.add(new java.util.HashSet<Node<T>>());
+				}
+				for (Node<T> n : neighbours) {
+					if(n.getColor() != null){
+						values.get(n.getColor()).add(n);
+					}
+				}
+				
+				int color = -1;
+				java.util.Set<Node<T>> set = new java.util.HashSet<Graph.Node<T>>();
+				int leastUsed = Integer.MAX_VALUE;
+				for(int i = 0; i < noOfColors; i++){
+					int spilled = 0;
+					for (Node<T> node : values.get(i)) {
+						spilled += node.getSpillingInfo().size();
+					}
+					if(spilled < leastUsed){
+						leastUsed = spilled;
+						set = values.get(i);
+						color = i;
+					}
+				}
+				if(resultSet != null){
+					resultSet.clear();
+					resultSet.addAll(set);
+				}
+				return color;
+			}
+			
 			public void addNeighbour(Node<T> node){
 				neighbours.add(node);
 			}
@@ -99,7 +136,7 @@ aspect GraphColoring {
 					colors.remove((Integer) node.getColor());
 				}
 				
-				return colors.size() == 0 ? null : colors.get(0);
+				return colors.isEmpty() ? null : colors.get(0);
 			}
 		}
 		
@@ -126,6 +163,11 @@ aspect GraphColoring {
 			}
 			
 			public void addSpilling(Node<T> n){
+				spillingInfo.add(n);
+				n.addSpilling(this,null);
+			}
+			
+			protected void addSpilling(Node<T> n, Object o){
 				spillingInfo.add(n);
 			}
 			

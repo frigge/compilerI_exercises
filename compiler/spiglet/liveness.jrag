@@ -9,9 +9,22 @@ aspect Liveness {
 		
 		return result;
 	}
+  eq Program.getStmts().liveness() = this.liveness();
+  eq Program.getProcs().liveness() = this.liveness();
+  
+  inh lazy LivenessAnalyse LabeledStmt.liveness();
+  inh lazy LivenessAnalyse Procedure.liveness();
+  inh lazy LivenessAnalyse Stmt.liveness();
+  inh lazy LivenessAnalyse StmtExp.liveness();
+  inh lazy LivenessAnalyse Exp.liveness();
+  inh lazy LivenessAnalyse Label.liveness();
+  inh lazy LivenessAnalyse Temp.liveness();
 
 
 	class Block{
+	
+		public final int blockNum = BLOCK_NUM++;
+		private static int BLOCK_NUM = 0;
 		private java.util.List<Stmt> blockCode = new java.util.ArrayList<Stmt>();
 		
 		private java.util.Set<Block> successors = new java.util.HashSet<Block>();
@@ -31,6 +44,10 @@ aspect Liveness {
 			stmt.addGenKill(gen,kill);
 		}
 		
+		public boolean isAlive(Temp t){
+			return out.contains(t);
+		}
+		
 		public void addCode(Exp e){
 			e.addGen(gen,kill);
 		}
@@ -43,6 +60,18 @@ aspect Liveness {
 			return out;
 		}
 		
+		public java.util.Set<Temp> getAlive(){
+			java.util.Set<Temp> set = new java.util.HashSet<Temp>();
+			set.addAll(kill);
+			set.addAll(getIn());
+			set.addAll(getOut());
+			return set;
+		}
+		
+		public java.util.Set<Block> getSuccessors(){
+			return successors;
+		}
+		
 		public boolean recalculate(){
 			java.util.Set<Temp> newOut = new java.util.HashSet<Temp>();
 			for(Block suc : successors){
@@ -50,16 +79,27 @@ aspect Liveness {
 			}
 			in.clear();
 			in.addAll(newOut);
-			in.remove(kill);
+			in.removeAll(kill);
 			in.addAll(gen);
 			boolean result = !newOut.equals(out);
 			out = newOut;
 			return result; 
 		}
+
+		public String toString() {
+			StringBuilder buil = new StringBuilder();
+			buil.append("[");
+			for(Block b: successors){
+				buil.append(b.blockNum).append(",");
+			}
+			buil.append("]");
+			return "Block [num="+blockNum+", blockCode=" + blockCode + ", successors=" + buil.toString() + ", gen=" + gen + ", kill=" + kill + ", in=" + in + ", out=" + out + "]";
+		}
 	}
 	
 	class LivenessAnalyse{
 		private java.util.Map<Label,Block> labelToBlock = new java.util.HashMap<Label,Block>();
+		private java.util.Map<Stmt,Block> codeToBlock = new java.util.HashMap<Stmt,Block>();
 		private java.util.Set<Block> blocks = new java.util.HashSet<Block>();
 		private Block currentBlock;
 		
@@ -90,27 +130,30 @@ aspect Liveness {
 		}
 		
 		private Block getCurrentBlock(boolean createNewBlock, boolean linkBlock, Label l){
-			Block b = null;
-			Block newBlock = null;
-			if(l != null){
-				b = getBlock(l);
-			} else {
-				b  = new Block();
+			if(currentBlock == null){
+				currentBlock = new Block();
+				blocks.add(currentBlock);
+				return currentBlock;
 			}
-			if(b != null){
-				if(linkBlock || !createNewBlock){
+			Block b = null;
+			if(l != null || createNewBlock){
+				if(l != null){
+					b = getBlock(l);
+				} else {
+					b = new Block();
+				}
+				if (linkBlock || !createNewBlock){
 					currentBlock.addSuccessor(b);
 				}
-				newBlock = b;
-			}
-			if(newBlock == null) {
-				newBlock = new Block();
-			}
-			if(newBlock != null){
-				currentBlock = newBlock;
-				blocks.add(newBlock);
+				blocks.add(b);
+				currentBlock = b;
 			}
 			return currentBlock;
+		}
+		
+		public boolean aliveInNextBlock(Stmt s, Temp t){
+			Block b = codeToBlock.get(s);
+			return b.getOut().contains(t);
 		}
 		
 		public void addCode(List<LabeledStmt> code){
@@ -119,24 +162,33 @@ aspect Liveness {
 			boolean jumpTillLabel = false;
 			for(LabeledStmt labeledStmt: code){
 				Label l = labeledStmt.getLabel();
-/*				if(jumpTillLabel){
+				if(jumpTillLabel){
 					if(l == null){
 						continue;
 					} else {
 						jumpTillLabel = false;
 					}
-				}*/
+				}
 				Block block = getCurrentBlock(createNewBlock, linkBlock, l);
 				Stmt stmt = labeledStmt.getStmt();
 				block.addCode(stmt);
+				codeToBlock.put(stmt,block);
 				if(stmt instanceof CJump){
 					createNewBlock = true;
 					linkBlock = true;
+					Label jumpLabel = ((CJump) stmt).getLabel();
+					block.addSuccessor(getBlock(jumpLabel));
 				} else if (stmt instanceof Jump){
 					createNewBlock = true;
 					linkBlock = false;
+					Label jumpLabel = ((Jump) stmt).getLabel();
+					block.addSuccessor(getBlock(jumpLabel));					
 				} else if (stmt instanceof Err){
 					jumpTillLabel = true;
+					linkBlock = false;
+				} else if (stmt.containsCall()){
+					createNewBlock = true;
+					linkBlock = true;			
 				} else {
 					linkBlock = false;
 					createNewBlock=false;
@@ -145,6 +197,7 @@ aspect Liveness {
 		}
 		
 		public void addCode(StmtExp e){
+			currentBlock = null;
 			addCode(e.getStmtss());
 			getCurrentBlock(false,false, null).addCode(e.getRetExp());
 		}
@@ -204,6 +257,23 @@ aspect Liveness {
 			return false;
 		}
 		return true;
+	}
+	
+	public boolean Stmt.containsCall(){
+		java.util.List<ASTNode<?>> check = new java.util.ArrayList<ASTNode<?>>();
+		check.add(this);
+		while (!check.isEmpty()) {
+			ASTNode<?> next = check.get(0);
+			if (next instanceof Call) {
+				return true;
+			}
+			int children = next.getNumChild();
+			for (int i = 0; i < children; i++) {
+				check.add(next.getChild(i));
+			}
+			check.remove(0);
+		}
+		return false;
 	}
 	
 	public abstract void Stmt.addGenKill(java.util.Set<Temp> gen, java.util.Set<Temp> kill);

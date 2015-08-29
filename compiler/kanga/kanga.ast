@@ -13,8 +13,8 @@ Move:Stmt		::= Dest:Reg Source:Exp;
 Print:Stmt		::= Value:SExp;
 ALoad:Stmt		::= Dest:Reg Value:SpilledArg;
 AStore:Stmt		::= Dest:SpilledArg Value:Reg;
-PassArg:Stmt	::= Number:IntLiteral Value:Reg;
-Call:Exp	    ::= Name:SExp;
+PassArg:Stmt	::= <Number:Integer> Value:Reg;
+Call:Stmt	    ::= Name:SExp;
 
 abstract Exp;
 HAlloc:Exp	 	::= Size:SExp;

@@ -1,9 +1,10 @@
-TempContext;
+abstract Code;
+abstract TempContext:Code;
 Program:TempContext	::= Stmts:LabeledStmt* Procs:Procedure*;
 
-LabeledStmt			::= [Label] Stmt:Stmt;
+LabeledStmt:Code			::= [Label] Stmt:Stmt;
 Procedure:TempContext ::= Label <Params:Integer> StmtsRet:StmtExp;
-abstract Stmt;
+abstract Stmt:Code;
 Noop:Stmt;
 Err:Stmt;
 CJump:Stmt			::= Cond:Temp Label:Label;
@@ -13,9 +14,9 @@ HLoad:Stmt			::=	Dest:Temp Addr:Temp <Offset:Integer>;
 Move:Stmt			::= Dest:Temp Source:Exp;
 Print:Stmt			::= Value:SExp;
 
-StmtExp		    	::= Stmts:LabeledStmt* RetExp:SExp;
+StmtExp:Code		    	::= Stmts:LabeledStmt* RetExp:SExp;
 
-abstract Exp;
+abstract Exp:Code;
 Call:Exp			::= Name:SExp Param:Temp*;
 HAlloc:Exp	 		::= Size:SExp;
          
@@ -30,5 +31,5 @@ Plus:Binop;
 Minus:Binop;
 Times:Binop;
 
-Temp   ::= <Number:Integer>;
-Label  ::= <Label>;
+Temp:Code   ::= <Number:Integer>;
+Label:Code  ::= <Label>;

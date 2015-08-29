@@ -8,8 +8,9 @@ aspect PrettyPrint {
   		sb = new StringBuilder();
   	}
   
-    public void append(String s) {
+    public PrettyPrinter append(String s) {
        sb.append(s);
+       return this;
     }
     
     public String getString() {
@@ -52,7 +53,11 @@ aspect PrettyPrint {
   inh lazy PrettyPrinter SpilledArg.printer();
   
   syn PrettyPrinter Program.print() {
-    printer().append("MAIN\n");
+    printer().append("MAIN");
+    printer().append("[").append(""+getArguments()).append("]");
+    printer().append("[").append(""+getStackSlots()).append("]");
+    printer().append("[").append(""+getMaxCallArgs()).append("]");
+    printer().append("\n");
     for (LabeledStmt s : getStmtss()) s.print();
     printer().append("\nEND\n");
     for (Procedure p : getProcss()) p.print();
@@ -72,7 +77,9 @@ aspect PrettyPrint {
  
   public void Procedure.print() {
   	getLabel().print();
-  	printer().append(" [" + getArguments().toString() +"] ");
+    printer().append("[").append(""+getArguments()).append("]");
+    printer().append("[").append(""+getStackSlots()).append("]");
+    printer().append("[").append(""+getMaxCallArgs()).append("]");
     for (LabeledStmt s : getStmtss()) s.print();
   	printer().append("\n");
   }
@@ -131,7 +138,7 @@ aspect PrettyPrint {
   }	 
   public void PassArg.print() {
     printer().append("PASSARG ");
-    getNumber().print();    
+    printer().append(""+getNumber());    
   	printer().append(" ");
   	getValue().print();
   }	 
