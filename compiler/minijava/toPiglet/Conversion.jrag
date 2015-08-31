@@ -1,6 +1,6 @@
 aspect MiniJavaToPigletConversion{	
 	syn int Code.classLookupReg() = 1;
-	syn boolean Code.debug() = false;
+	syn boolean Code.debug() = true;
 
 	syn piglet.Program Program.toPiglet() {
 		piglet.List<piglet.LabeledStmt> mainStatements = new piglet.List<piglet.LabeledStmt>();

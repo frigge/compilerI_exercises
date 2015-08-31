@@ -33,7 +33,7 @@ aspect PigletToSpigletConversion{
 		kanga.Label label = getLabel().toKanga();
 		kanga.List<kanga.LabeledStmt> mainStatements = new kanga.List<kanga.LabeledStmt>();
 		
-		for(int i = 0; i < getParams(); i++){
+		for(int i = getParams() -1; i >= 0 ; i--){
 			Temp t = new Temp(i);
 			t.setParent(this);
 			if(i <= 3){
@@ -42,7 +42,7 @@ aspect PigletToSpigletConversion{
 					add(mainStatements, new kanga.AStore(new kanga.SpilledArg(spill),kanga.RegMapper.aReg(i))); 
 				}
 			} else {
-				registerInfo().setSpill(t,i-3);
+				registerInfo().getSpillNum(t);
 			}
 		}
 		

@@ -60,11 +60,6 @@ aspect RegisterAllocation {
 			} 
 		}
 		
-		public void setSpill(Temp t, int i){
-			TempInfo inf = infos.get(t);
-			if (inf != null) inf.setSpillingField(i);
-		}
-		
 		public int spill(Temp t){
 			TempInfo i = infos.get(t);
 			i.spill();
