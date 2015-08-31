@@ -128,7 +128,7 @@ aspect GraphColoring {
 			
 			public Integer getFreeColor(int noOfColors){
 				java.util.List<Integer> colors = new java.util.ArrayList<Integer>(noOfColors);
-				for(int i = 1; i <= noOfColors; i++){
+				for(int i = 1; i < noOfColors; i++){
 					colors.add(i);
 				}
 				

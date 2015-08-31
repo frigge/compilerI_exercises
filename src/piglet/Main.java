@@ -1,8 +1,11 @@
 package piglet;
 
-import minijava.*;
+import minijava.MJParser;
+import minijava.MJScanner;
 
 import java.io.*;
+
+import carFrigge.minijava.*;
 
 class Main {
 

@@ -14,7 +14,8 @@ class MJFrontEnd {
 //      inputFileName = "tests/MainTestForType.java";
 //	    inputFileName = "tests/MainTestForPiglet.java";
 //      inputFileName = "tests/MainTestForPigletWithClassDecl.java";
-      inputFileName = "tests/carFrigge/MainTestForPigletWithMultipleClassDecls.java";
+//     inputFileName = "tests/carFrigge/MainTestForPigletWithMultipleClassDecls.java";
+     inputFileName = "tests/carFrigge/MainTestForKangaSpill.java";
 //      inputFileName = "tests/MainTestForPigletArray.java";
     }
    else {

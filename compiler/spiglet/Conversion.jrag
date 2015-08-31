@@ -1,7 +1,7 @@
 aspect PigletToSpigletConversion{
 
 	syn int Program.numOfReg(){
-		return 10;
+		return 17;
 	}
 
 	syn kanga.Program Program.toKanga(){
@@ -95,18 +95,34 @@ aspect PigletToSpigletConversion{
 	
 	public kanga.List<kanga.LabeledStmt> HStore.toKanga(){
 		kanga.List<kanga.LabeledStmt> mainStatements = new kanga.List<kanga.LabeledStmt>();
-		kanga.Reg addr = getAddr().toKanga(mainStatements,false);
-		int offset = getOffset();
-		kanga.Reg value = getValue().toKanga(mainStatements,true);
+		int regNumAddr = registerInfo().getRegister(getAddr());
+		int regNumValue = registerInfo().getRegister(getValue());
+		kanga.Reg addr;
+		kanga.Reg value;
+		addr = getAddr().toKanga(mainStatements,true);
+		if (regNumAddr == regNumValue) { //Collision; Coloring fehlgeschlagen
+			add(mainStatements, new kanga.Move(new kanga.S7(), new kanga.RegExp(addr)));
+			addr = new kanga.S7();
+		}
+		value = getValue().toKanga(mainStatements,true);
 		
+		int offset = getOffset();
 		add(mainStatements, new kanga.HStore(addr,offset,value));
 		return mainStatements;
 	}	
 	
 	public kanga.List<kanga.LabeledStmt> HLoad.toKanga(){
 		kanga.List<kanga.LabeledStmt> mainStatements = new kanga.List<kanga.LabeledStmt>();
-		kanga.Reg dest = getDest().toKanga(mainStatements,false);
-		kanga.Reg addr = getAddr().toKanga(mainStatements,true);
+		int regNumAddr = registerInfo().getRegister(getAddr());
+		int regNumValue = registerInfo().getRegister(getDest());
+		kanga.Reg addr;
+		kanga.Reg dest;
+		addr = getAddr().toKanga(mainStatements,true);
+		if (regNumAddr == regNumValue) { //Collision; Coloring fehlgeschlagen
+			add(mainStatements, new kanga.Move(new kanga.S7(), new kanga.RegExp(addr)));
+			addr = new kanga.S7();
+		}
+		dest = getDest().toKanga(mainStatements,true);
 		int offset = getOffset();
 		
 		add(mainStatements, new kanga.HLoad(dest,addr,offset));
@@ -192,19 +208,31 @@ aspect PigletToSpigletConversion{
 	}
 	
 	public kanga.Exp Lt.toKanga(kanga.List<kanga.LabeledStmt> code){
-		return new kanga.Lt(getLeft().toKanga(code,true), getRight().toKanga(code));
+		kanga.Reg left = getLeft().toKanga(code,true);
+		add(code, new kanga.Move(new kanga.S7(), new kanga.RegExp(left)));
+		
+		return new kanga.Lt(new kanga.S7(), getRight().toKanga(code));
 	}
 	
 	public kanga.Exp Plus.toKanga(kanga.List<kanga.LabeledStmt> code){
-		return new kanga.Plus(getLeft().toKanga(code,true), getRight().toKanga(code));
+		kanga.Reg left = getLeft().toKanga(code,true);
+		add(code, new kanga.Move(new kanga.S7(), new kanga.RegExp(left)));
+		
+		return new kanga.Plus(new kanga.S7(), getRight().toKanga(code));
 	}
 	
 	public kanga.Exp Minus.toKanga(kanga.List<kanga.LabeledStmt> code){
-		return new kanga.Minus(getLeft().toKanga(code,true), getRight().toKanga(code));
+		kanga.Reg left = getLeft().toKanga(code,true);
+		add(code, new kanga.Move(new kanga.S7(), new kanga.RegExp(left)));
+		
+		return new kanga.Minus(new kanga.S7(), getRight().toKanga(code));
 	}
 	
 	public kanga.Exp Times.toKanga(kanga.List<kanga.LabeledStmt> code){
-		return new kanga.Times(getLeft().toKanga(code,true), getRight().toKanga(code));
+		kanga.Reg left = getLeft().toKanga(code,true);
+		add(code, new kanga.Move(new kanga.S7(), new kanga.RegExp(left)));
+		
+		return new kanga.Times(new kanga.S7(), getRight().toKanga(code));
 	}
 	
 // ---------------------------------------------------------------------------------------------------------------------
@@ -215,13 +243,14 @@ aspect PigletToSpigletConversion{
 		int regNum = registerInfo().getRegister(this);
 		if(registerInfo().isSpilled(this)){
 			Temp t = registerInfo().load(this);
-			int thisSpillNum = registerInfo().getSpillNum(this);
 			if(t != null){
+				t.liveness();
 				int spillNum = registerInfo().spill(t);
 				kanga.Stmt spill = new kanga.AStore(new kanga.SpilledArg(spillNum), kanga.RegMapper.tReg(regNum));
 				add(codeList,spill);
 			}
 			if(read){
+				int thisSpillNum = registerInfo().getSpillNum(this);
 				kanga.Stmt load = new kanga.ALoad(kanga.RegMapper.tReg(regNum), new kanga.SpilledArg(thisSpillNum));
 				add(codeList,load);
 			}
