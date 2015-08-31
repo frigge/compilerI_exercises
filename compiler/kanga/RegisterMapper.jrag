@@ -12,14 +12,7 @@ aspect RegMapper{
 				case 7: return new T7();
 				case 8: return new T8();
 				case 9: return new T9();
-				case 10: return new S0();
-				case 11: return new S1();
-				case 12: return new S2();
-				case 13: return new S3();
-				case 14: return new S4();
-				case 15: return new S5();
-				case 16: return new S6();
-				default: throw new UnsupportedOperationException("RegMapperT "+number);
+				default: throw new UnsupportedOperationException("RegMapper");
 			}
 		}
 		public static Reg aReg(int number){
@@ -28,14 +21,21 @@ aspect RegMapper{
 				case 1: return new A1();
 				case 2: return new A2();
 				case 3: return new A3();
-				default: throw new UnsupportedOperationException("RegMapperA");
+				default: throw new UnsupportedOperationException("RegMapper");
 			}
 		}
 		
 		public static Reg sReg(int number){
 			switch(number){
+				case 0: return new S0();
+				case 1: return new S1();
+				case 2: return new S2();
+				case 3: return new S3();
+				case 4: return new S4();
+				case 5: return new S5();
+				case 6: return new S6();
 				case 7: return new S7();
-				default: throw new UnsupportedOperationException("RegMapperS");
+				default: throw new UnsupportedOperationException("RegMapper");
 			}
 		}
 	}

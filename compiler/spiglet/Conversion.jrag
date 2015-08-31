@@ -1,7 +1,7 @@
 aspect PigletToSpigletConversion{
 
 	syn int Program.numOfReg(){
-		return 17;
+		return 10;
 	}
 
 	syn kanga.Program Program.toKanga(){
