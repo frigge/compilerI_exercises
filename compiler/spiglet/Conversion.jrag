@@ -33,16 +33,17 @@ aspect PigletToSpigletConversion{
 		kanga.Label label = getLabel().toKanga();
 		kanga.List<kanga.LabeledStmt> mainStatements = new kanga.List<kanga.LabeledStmt>();
 		
-		for(int i = getParams() -1; i >= 0 ; i--){
+		for(int i = 4; i < getParams(); i++){
 			Temp t = new Temp(i);
 			t.setParent(this);
-			if(i <= 3){
-				int spill = registerInfo().getSpillNum(t);
-				if(spill >= 0){
-					add(mainStatements, new kanga.AStore(new kanga.SpilledArg(spill),kanga.RegMapper.aReg(i))); 
-				}
-			} else {
-				registerInfo().getSpillNum(t);
+			registerInfo().getSpillNum(t);
+		}
+		for(int i = 0; i < getParams() && i < 4; i++){
+			Temp t = new Temp(i);
+			t.setParent(this);
+			int spill = registerInfo().getSpillNum(t);
+			if(spill >= 0){
+				add(mainStatements, new kanga.AStore(new kanga.SpilledArg(spill),kanga.RegMapper.aReg(i))); 
 			}
 		}
 		
@@ -244,7 +245,6 @@ aspect PigletToSpigletConversion{
 		if(registerInfo().isSpilled(this)){
 			Temp t = registerInfo().load(this);
 			if(t != null){
-				t.liveness();
 				int spillNum = registerInfo().spill(t);
 				kanga.Stmt spill = new kanga.AStore(new kanga.SpilledArg(spillNum), kanga.RegMapper.tReg(regNum));
 				add(codeList,spill);
