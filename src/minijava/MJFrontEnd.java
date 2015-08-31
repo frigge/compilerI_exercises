@@ -9,14 +9,14 @@ class MJFrontEnd {
    if(args.length != 1) {
 //      System.out.println("MJFrontEnd: missing file command line argument");
       //System.exit(1);
-//      inputFileName = "tests/MainTest.java";
-//      inputFileName = "tests/MainTestForLookup.java";
-//      inputFileName = "tests/MainTestForType.java";
-//	    inputFileName = "tests/MainTestForPiglet.java";
-//      inputFileName = "tests/MainTestForPigletWithClassDecl.java";
+//      inputFileName = "tests/carFrigge/MainTest.java";
+//      inputFileName = "tests/carFrigge/MainTestForLookup.java";
+//      inputFileName = "tests/carFrigge/MainTestForType.java";
+	    inputFileName = "tests/carFrigge/MainTestForPiglet.java";
+//      inputFileName = "tests/carFrigge/MainTestForPigletWithClassDecl.java";
 //     inputFileName = "tests/carFrigge/MainTestForPigletWithMultipleClassDecls.java";
-     inputFileName = "tests/carFrigge/MainTestForKangaSpill.java";
-//      inputFileName = "tests/MainTestForPigletArray.java";
+//     inputFileName = "tests/carFrigge/MainTestForKangaSpill.java";
+//      inputFileName = "tests/carFrigge/MainTestForPigletArray.java";
     }
    else {
       System.out.println("MJFrontEnd: starting on file " + args[0]);
@@ -54,6 +54,7 @@ class MJFrontEnd {
 //    	  System.out.println(spiglet.print().getString());
     	  kanga.Program kanga = spiglet.toKanga();
     	  System.out.println(kanga.print().getString());
+    	  kanga.execute();
       }
     }
     catch (FileNotFoundException e) {
