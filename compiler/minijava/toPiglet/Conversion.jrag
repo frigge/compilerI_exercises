@@ -1,5 +1,6 @@
 aspect MiniJavaToPigletConversion{	
 	syn int Code.classLookupReg() = 1;
+	syn boolean Code.debug() = true;
 
 	syn piglet.Program Program.toPiglet() {
 		piglet.List<piglet.LabeledStmt> mainStatements = new piglet.List<piglet.LabeledStmt>();
@@ -48,10 +49,10 @@ aspect MiniJavaToPigletConversion{
 		if(numOfClassDecls > 0){
 			memLookup().blockTemp(classLookupReg(),null);
 			int arbeitsTemp = memLookup().getFreeTemp();
-			result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_StartingClassLookupBuilding")),new piglet.Noop()));
+			if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_StartingClassLookupBuilding")),new piglet.Noop()));
 			add(result,new piglet.Move(new piglet.Temp(classLookupReg()), new piglet.HAlloc(new piglet.IntLiteral(4*numOfClassDecls))));
 			for(int i = 0; i < numOfClassDecls; i++){
-				result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_BuildingClass"+i)),new piglet.Noop()));
+				if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_BuildingClass"+i)),new piglet.Noop()));
 				ClassDecl c = classGen().getClassAtPos(i);
 				java.util.Set<java.util.Map.Entry<MethodDecl,Integer>> methods = classGen().methods(c);
 				add(result,new piglet.Move(new piglet.Temp(arbeitsTemp), new piglet.HAlloc(new piglet.IntLiteral(4*methods.size()))));
@@ -60,7 +61,7 @@ aspect MiniJavaToPigletConversion{
 					add(result,new piglet.HStore(new piglet.TempExp(new piglet.Temp(arbeitsTemp)),4*e.getValue(),new piglet.LabelExp(new piglet.Label(e.getKey().getMethodName()))));
 				}
 			}
-			result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_DoneBuildingClasses")),new piglet.Noop()));
+			if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_DoneBuildingClasses")),new piglet.Noop()));
 			memLookup().unblockTemp(arbeitsTemp);
 		}
 		return result;
@@ -74,13 +75,13 @@ aspect MiniJavaToPigletConversion{
   		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
 		localLookup().openScp();
 		
-		if(getVariabless().getNumChild() > 0) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsSTART")),new piglet.Noop()));
+		if(debug()) if(getVariabless().getNumChild() > 0) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsSTART")),new piglet.Noop()));
   		for(VarDecl v : getVariabless()){
   			localLookup().enter(v);
   			memLookup().enter(v);
   			result.addAll(v.initPiglet());
   		}
-		if(getVariabless().getNumChild() > 0) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsENDE")),new piglet.Noop()));
+		if(debug()) if(getVariabless().getNumChild() > 0) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsENDE")),new piglet.Noop()));
 		
   		labelGen().setSourroundings(getIdent().getIdent());
   		for(Statement s : getStatementss()){
@@ -117,13 +118,13 @@ aspect MiniJavaToPigletConversion{
   			localLookup().enter(v);
   			memLookup().blockTemp(parameter++,v);
   		}
-		if(getVarss().getNumChild() > 0) statements.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsSTART")),new piglet.Noop()));
+		if(debug()) if(getVarss().getNumChild() > 0) statements.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsSTART")),new piglet.Noop()));
   		for(VarDecl v : getVarss()){
   			localLookup().enter(v);
   			memLookup().enter(v);
   			statements.addAll(v.initPiglet());
   		}
-		if(getVarss().getNumChild() > 0)  statements.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsENDE")),new piglet.Noop()));
+		if(debug()) if(getVarss().getNumChild() > 0)  statements.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_InitVarsENDE")),new piglet.Noop()));
   		String name = this.getMethodName();
   		for(Statement s : getStatementss()){
   			statements.addAll(s.toPiglet());
@@ -165,7 +166,7 @@ aspect MiniJavaToPigletConversion{
   	}
   	public piglet.List<piglet.LabeledStmt> IfThenElse.toPiglet(){
   		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_IfThenElseSTART")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_IfThenElseSTART")),new piglet.Noop()));
   		String thenLabel = labelGen().getLabel(new ThenLabel());
   		String elseLabel = labelGen().getLabel(new ElseLabel());
   		String endIfLabel = labelGen().getLabel(new EndIfLabel());
@@ -188,13 +189,13 @@ aspect MiniJavaToPigletConversion{
   		}
   		//EndIf
   		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(endIfLabel)), new piglet.Noop()));
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_IfThenElseEND")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_IfThenElseEND")),new piglet.Noop()));
   		return result;
   	}
   	
   	public piglet.List<piglet.LabeledStmt> While.toPiglet(){
   		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_WhileSTART")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_WhileSTART")),new piglet.Noop()));
   		String whileLabel = labelGen().getLabel(new WhileLabel());
   		String whileLoopLabel = labelGen().getLabel(new WhileLoopLabel());
   		String whileEndLabel = labelGen().getLabel(new WhileEndLabel());
@@ -213,7 +214,7 @@ aspect MiniJavaToPigletConversion{
   										));
   		//EndLoop
   		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(whileEndLabel)), new piglet.Noop()));
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_WhileEND")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_WhileEND")),new piglet.Noop()));
   		return result;
   	}
   	
@@ -236,16 +237,16 @@ aspect MiniJavaToPigletConversion{
   	  	
   	public piglet.List<piglet.LabeledStmt> Zuweisung.toPiglet(){
   		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ZuweisungSTART")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ZuweisungSTART")),new piglet.Noop()));
   		add(result, store(getIdent(),getExp().toPiglet()));
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ZuweisungEnde")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ZuweisungEnde")),new piglet.Noop()));
   		return result;
   	}
   	
   	public piglet.List<piglet.LabeledStmt> ArrZuw.toPiglet(){
   		int TYPE_SIZE = 4;
   		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ArrayZuweisungSTART")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ArrayZuweisungSTART")),new piglet.Noop()));
 		int arbeitstemp = memLookup().getFreeTemp();
 		int adresse = memLookup().getFreeTemp();
 		int groesse = memLookup().getFreeTemp();
@@ -279,7 +280,7 @@ aspect MiniJavaToPigletConversion{
 		memLookup().unblockTemp(arbeitstemp);
 		memLookup().unblockTemp(adresse);
 		memLookup().unblockTemp(groesse);
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ArrayZuweisungEnde")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ArrayZuweisungEnde")),new piglet.Noop()));
   		return result;
   	}
   	
@@ -295,7 +296,7 @@ aspect MiniJavaToPigletConversion{
   	}
 	public piglet.Exp ArrayExp.toPiglet(){
 		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ArrayExpressionSTART")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ArrayExpressionSTART")),new piglet.Noop()));
 		piglet.Exp feld = getFeld().toPiglet();
 		int arbeitstemp = memLookup().getFreeTemp();
 		int pos = memLookup().getFreeTemp();
@@ -322,12 +323,12 @@ aspect MiniJavaToPigletConversion{
 		memLookup().unblockTemp(arbeitstemp);
 		memLookup().unblockTemp(pos);
 		memLookup().unblockTemp(memAdress);
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ArrayExpressionEnde")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_ArrayExpressionEnde")),new piglet.Noop()));
 		return new piglet.StmtExp(result,new piglet.TempExp(new piglet.Temp(arbeitstemp)));
 	}
 	public piglet.Exp LengthExp.toPiglet(){
 		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_LengthExpressionSTART")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_LengthExpressionSTART")),new piglet.Noop()));
 		piglet.Exp e = getFeld().toPiglet();
 		int arbeitstemp = memLookup().getFreeTemp();
 		String noErrorLabel = labelGen().getLabel(new NoErrorLabel());
@@ -337,12 +338,12 @@ aspect MiniJavaToPigletConversion{
   		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(noErrorLabel)), new piglet.Noop()));
 		add(result,new piglet.HLoad(new piglet.Temp(arbeitstemp),new piglet.TempExp(new piglet.Temp(arbeitstemp)),0));
 		memLookup().unblockTemp(arbeitstemp);
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_LengthExpressionENDE")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_LengthExpressionENDE")),new piglet.Noop()));
 		return new piglet.StmtExp(result,new piglet.TempExp(new piglet.Temp(arbeitstemp)));
 	}
 	public piglet.Exp MethodExp.toPiglet(){
 		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_MehtodExpressionSTART")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_MehtodExpressionSTART")),new piglet.Noop()));
 		piglet.Exp e = getFeld().toPiglet();
 		int objectPointer = memLookup().getFreeTemp();
 		int arbeitstemp = memLookup().getFreeTemp();
@@ -374,7 +375,7 @@ aspect MiniJavaToPigletConversion{
 		add(result,new piglet.Move(new piglet.Temp(arbeitstemp), new piglet.Call(new piglet.TempExp(new piglet.Temp(arbeitstemp)),params)));
 		memLookup().unblockTemp(objectPointer);
 		memLookup().unblockTemp(arbeitstemp);
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_MehtodExpressionENDE")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_MehtodExpressionENDE")),new piglet.Noop()));
 		return new piglet.StmtExp(result,new piglet.TempExp(new piglet.Temp(arbeitstemp)));
 	}
 	public piglet.Exp TrueExp.toPiglet(){
@@ -392,10 +393,10 @@ aspect MiniJavaToPigletConversion{
 			int arbeitsTemp = memLookup().getFreeTemp();
 			int speicherPos = memLookup().lookup(v);
 	  		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-			result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_IdExpMitNonStackVarSTART")),new piglet.Noop()));
+			if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_IdExpMitNonStackVarSTART")),new piglet.Noop()));
 	  		add(result,new piglet.HLoad(new piglet.Temp(arbeitsTemp),new piglet.TempExp(new piglet.Temp(0)), classGen().lookup(v)));
 	  		memLookup().unblockTemp(arbeitsTemp);
-			result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_IdExpMitNonStackVarENDE")),new piglet.Noop()));
+			if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_IdExpMitNonStackVarENDE")),new piglet.Noop()));
 	  		return new piglet.StmtExp(result, new piglet.TempExp(new piglet.Temp(arbeitsTemp)));
 		}
 	}
@@ -408,7 +409,7 @@ aspect MiniJavaToPigletConversion{
 	public piglet.Exp IntArrExp.toPiglet(){
 		int TYPE_SIZE = 4;
   		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_IntArrayExpressionSTART")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_IntArrayExpressionSTART")),new piglet.Noop()));
 		int groesseWert = memLookup().getFreeTemp();
 		int arrayPointer = memLookup().getFreeTemp();
 		int initCounter = memLookup().getFreeTemp();
@@ -443,7 +444,7 @@ aspect MiniJavaToPigletConversion{
 	  	memLookup().unblockTemp(groesseWert);
 	  	memLookup().unblockTemp(arrayPointer);
 	  	memLookup().unblockTemp(initCounter);
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_IntArrayExpressionEnde")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_IntArrayExpressionEnde")),new piglet.Noop()));
   		return new piglet.StmtExp(result, new piglet.TempExp(new piglet.Temp(arrayPointer)));
 	}
 	public piglet.Exp NewExp.toPiglet(){
@@ -452,7 +453,7 @@ aspect MiniJavaToPigletConversion{
 		int groesse = c.getSizeOfDecl();
 		int noetigeGroesse = (groesse + 1)*4;
   		piglet.List<piglet.LabeledStmt> result = new piglet.List<piglet.LabeledStmt>();
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_NewExpressionSTART")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_NewExpressionSTART")),new piglet.Noop()));
 		int objectPointer = memLookup().getFreeTemp();
 		int classPointer = memLookup().getFreeTemp();
 		piglet.Exp alloc = new piglet.HAlloc(new piglet.IntLiteral(noetigeGroesse));
@@ -466,7 +467,7 @@ aspect MiniJavaToPigletConversion{
 		
 	  	memLookup().unblockTemp(objectPointer);
 	  	memLookup().unblockTemp(classPointer);
-		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_NewExpressionENDE")),new piglet.Noop()));
+		if(debug()) result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label("_COMMENT_NewExpressionENDE")),new piglet.Noop()));
   		return new piglet.StmtExp(result, new piglet.TempExp(new piglet.Temp(objectPointer)));
 	}
 	public piglet.Exp NotExp.toPiglet(){

@@ -4,6 +4,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import carFrigge.kanga.KangaTest;
 import carFrigge.minijava.NameTest;
 import carFrigge.minijava.TypeTest;
 import carFrigge.piglet.PigletTest;
@@ -14,7 +15,8 @@ import carFrigge.spiglet.SPigletTest;
 	NameTest.class,
 	TypeTest.class,
 	PigletTest.class,
-	SPigletTest.class
+	SPigletTest.class,
+	KangaTest.class
 })
 public class CarFriggeTestSuite {
 }
