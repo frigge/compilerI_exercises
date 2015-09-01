@@ -263,7 +263,7 @@ aspect MiniJavaToPigletConversion{
 	  		add(result,new piglet.HLoad(new piglet.Temp(adresse),new piglet.TempExp(new piglet.Temp(0)), classGen().lookup(v)));
 		}
 		noErrorLabel = labelGen().getLabel(new NoErrorLabel());
-		add(result, new piglet.CJump(new piglet.Lt(new piglet.IntLiteral(1), new piglet.TempExp(new piglet.Temp(adresse))), new piglet.Label(noErrorLabel)));
+		add(result, new piglet.CJump(new piglet.Lt(new piglet.TempExp(new piglet.Temp(adresse)), new piglet.IntLiteral(1)), new piglet.Label(noErrorLabel)));
 		add(result, new piglet.Err());
   		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(noErrorLabel)), new piglet.Noop()));
 		add(result, new piglet.HLoad(new piglet.Temp(groesse), new piglet.TempExp(new piglet.Temp(adresse)), 0));
@@ -426,15 +426,15 @@ aspect MiniJavaToPigletConversion{
   		String whileLoopLabel = labelGen().getLabel(new WhileLoopLabel());
   		String whileEndLabel = labelGen().getLabel(new WhileEndLabel());
   		//While Bedingung
-  		piglet.Exp bedingung = new piglet.Lt(new piglet.TempExp(new piglet.Temp(initCounter)), new piglet.TempExp(new piglet.Temp(arrayPointer)));
+  		piglet.Exp bedingung = new piglet.Lt(new piglet.TempExp(new piglet.Temp(initCounter)), new piglet.TempExp(new piglet.Temp(groesseWert)));
   		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(whileLabel)), new piglet.Noop()));
   		add(result,new piglet.CJump(bedingung,new piglet.Label(whileEndLabel)));
   		add(result,new piglet.Jump(new piglet.Label(whileLoopLabel)));
   		//LoopCode
   		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(whileLoopLabel)), new piglet.Noop()));
-  		piglet.Exp offset = new piglet.Plus(new piglet.IntLiteral(1), new piglet.Times(new piglet.IntLiteral(TYPE_SIZE),new piglet.TempExp(new piglet.Temp(initCounter))));
-  		add(result,new piglet.HStore(new piglet.Plus(new piglet.TempExp(new piglet.Temp(arrayPointer)),offset),0,new piglet.IntLiteral(0)));
   		add(result,new piglet.Move(new piglet.Temp(initCounter), new piglet.Plus(new piglet.TempExp(new piglet.Temp(initCounter)), new piglet.IntLiteral(1))));
+  		piglet.Exp offset = new piglet.Times(new piglet.IntLiteral(TYPE_SIZE),new piglet.TempExp(new piglet.Temp(initCounter)));
+  		add(result,new piglet.HStore(new piglet.Plus(new piglet.TempExp(new piglet.Temp(arrayPointer)),offset),0,new piglet.IntLiteral(0)));
   		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(),
   											new piglet.Jump(new piglet.Label(whileLabel))
   										));

@@ -126,7 +126,7 @@ aspect Execution {
 		}
 		
 		public void writePassArg(int pos, int value){
-			passArg[pos] = value;
+			passArg[pos-1] = value;
 		}
 	}
 	
@@ -259,7 +259,7 @@ aspect Execution {
 	
 	public void Procedure.call(int[] params){
 		stack().reset();
-		for(int i = 4; i < getArguments() - 1; i++){
+		for(int i = 4; i < getArguments(); i++){
 			int pos = i-4;
 			stack().write(pos, params[pos]);
 		}
