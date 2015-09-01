@@ -18,6 +18,7 @@ public class KangaHelper {
 	public static List<String> getOutput(File f) throws IOException, Exception{
 		spiglet.Program sp = TestHelper.buildSpiglet(f);
 		kanga.Program kp = sp.toKanga();
+		System.out.println(kp.print().getString());
 		
 		PrintStream sout = System.out;
 		PipedOutputStream outPipeOut = new PipedOutputStream();

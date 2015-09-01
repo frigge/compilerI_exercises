@@ -66,8 +66,8 @@ MethodDecl = kw_public.first Type.returnType id.methodName sym_open ParamList.pa
 		| kw_public.first Type.returnType id.methodName sym_open sym_close sym_open_curly VarDeclList.vars StatementList.statements kw_return Exp.ret sym_semicolon sym_close_curly
 																						{: return new MethodDecl(getLine(first),methodName, returnType, new List<VarDecl>(), vars, statements, ret); :};
 
-ParamList = Type.t id.i ParamRestList.l													{: VarDecl p = new VarDecl(getLine(t),i,t); l.add(p); return l; :};
-ParamRestList = ParamRest.p ParamRestList.l												{: l.add(p); return l; :}
+ParamList = Type.t id.i ParamRestList.l													{: List<VarDecl> lNeu = new List<VarDecl>(); VarDecl p = new VarDecl(getLine(t),i,t); lNeu.add(p); lNeu.addAll(l); return lNeu; :};
+ParamRestList = ParamRest.p ParamRestList.l												{: List<VarDecl> lNeu = new List<VarDecl>(); lNeu.add(p); lNeu.addAll(l); return lNeu; :}
 		|																				{: return new List<VarDecl>(); :};
 ParamRest = sym_comma Type.t id.i														{: return new VarDecl(getLine(t), i, t); :};
 
@@ -101,7 +101,7 @@ Exp = Exp.l op.o Exp.r																	{: return new BinOpExp(getLine(l),l,o,r);
         | sym_exclam.first Exp.e														{: return new NotExp(getLine(first),e); :}
         | sym_open.first Exp.e sym_close												{: return new Geklammert(getLine(first),e); :};
         
-ExpList = ExpRestList.l Exp.e															{: List<Exp> l2 = new List<Exp>(); l2.add(e); for(Exp v: l){l2.add(v);}; return l2; :};
+ExpList = ExpRestList.l Exp.e															{: l.add(e); return l; :};
 ExpRestList = ExpRestList.l ExpRest.r													{: l.add(r); return l; :}
 		|																				{: return new List<Exp>(); :};
 ExpRest = Exp.e	sym_comma 																{: return e; :};

@@ -60,6 +60,7 @@
           <include name="${minijava.grammar.dir}/parser/*.ast"/>
 		  <include name="${minijava.grammar.dir}/checking/*.jrag"/>
 		  <include name="${minijava.grammar.dir}/toPiglet/*.jrag"/>
+		  <include name="${minijava.grammar.dir}/parser/*.jrag"/>
           <include name="${minijava.grammar.dir}/*.jadd"/>
         </fileset>
       </jastadd>
