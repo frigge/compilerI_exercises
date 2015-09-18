@@ -37,7 +37,7 @@ aspect KangaToMipsConversion {
 
     public mips.List<mips.Code> CJump.toMips() {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
-        code.add(new mips.Bneq(getCond().toMips(), getLabel().toMips()));
+        code.add(new mips.Beq(getCond().toMips(), new mips.Zero(), getLabel().toMips()));
         return code;
     }
 
