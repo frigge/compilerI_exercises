@@ -1,0 +1,25 @@
+Program                ::= Code*;
+abstract Code;
+Bneq:Code              ::= Cond:Reg Label:Label;
+Jump:Code              ::= Label:Label;
+StoreWord:Code         ::= Addr:Reg <Offset:Integer> Value:Reg;
+LoadWord:Code          ::= Dest:Reg Addr:Reg <Offset:Integer>;
+LoadImediate:Code      ::= Dest:Reg <Constant:Integer>;
+Add:Code               ::= Dest:Reg Left:Reg Right:Reg;
+AddImmediate:Code      ::= Dest:Reg Left:Reg <Constant:Integer>;
+Sub:Code               ::= Dest:Reg Left:Reg Right:Reg;
+Mult:Code              ::= Dest:Reg Left:Reg Right:Reg;
+SetLessThan:Code       ::= Dest:Reg Left:Reg Right:Reg;
+
+Syscall:Code;
+
+abstract Reg;
+A0:Reg; A1:Reg; A2:Reg; A3:Reg;
+T0:Reg; T1:Reg; T2:Reg; T3:Reg; T4:Reg; T5:Reg; T6:Reg; T7:Reg; T8:Reg; T9:Reg;
+S0:Reg; S1:Reg; S2:Reg; S3:Reg; S4:Reg; S5:Reg; S6:Reg; S7:Reg;
+GP:Reg; SP:Reg; FP:Reg;
+V0:Reg; V1:Reg;
+RA:Reg;
+Zero:Reg;
+
+Label:Code               ::= <Label>;

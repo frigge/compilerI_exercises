@@ -6,12 +6,14 @@
   <property name="piglet.package" value="piglet"/>
   <property name="minijava.package" value="minijava"/>
   <property name="kanga.package" value="kanga"/>
+  <property name="mips.package" value="mips"/>
 
   <property name="src.dir" value="src"/>
   <property name="minijava.grammar.dir" value="compiler/minijava"/>
   <property name="piglet.grammar.dir" value="compiler/piglet"/>
   <property name="spiglet.grammar.dir" value="compiler/spiglet"/>
   <property name="kanga.grammar.dir" value="compiler/kanga"/>
+  <property name="mips.grammar.dir" value="compiler/mips"/>
   <property name="gen.dir" value="${basedir}/gen"/>
   <property name="classes.dir" value="bin"/>
   <property name="tools"   value="tools"/>
@@ -91,7 +93,15 @@
         <fileset dir=".">
           <include name="${kanga.grammar.dir}/*.ast"/>
 		  <include name="${kanga.grammar.dir}/*.jrag"/>
-		  <include name="${kanga.grammar.dir}/*.jrag"/>
+        </fileset>
+      </jastadd>
+  </target>
+
+  <target name="mips.jastadd">
+    <jastadd package="${mips.package}" grammar="${mips.grammar.dir}" outdir="${gen.dir}" beaver="true" debug="true">
+        <fileset dir=".">
+          <include name="${mips.grammar.dir}/*.ast"/>
+		  <include name="${mips.grammar.dir}/*.jrag"/>
         </fileset>
       </jastadd>
   </target>
@@ -101,6 +111,7 @@
       piglet.jastadd,
       minijava.jastadd,
       kanga.jastadd,
+      mips.jastadd,
       spiglet.parser,spiglet.scanner,
       piglet.parser,piglet.scanner,
       minijava.parser,minijava.scanner">
