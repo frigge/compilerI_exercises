@@ -7,11 +7,16 @@ aspect KangaToMipsConversion {
         }
         return new mips.Program(code);
     }
+
+    abstract mips.List<mips.Code> Stmt.toMips();
+
     public mips.List<mips.Code> LabeledStmt.toMips() {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         if(getLabel() != null) {
             code.add(getLabel().toMips());
         }
+
+        addAll(code, getStmt().toMips());
         return code;
     }
 
@@ -32,7 +37,7 @@ aspect KangaToMipsConversion {
 
     public mips.List<mips.Code> CJump.toMips() {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
-        code.add(new mips.Bneq(getCond().toMips(), getLabel().toMips()));
+        code.add(new mips.Beq(getCond().toMips(), new mips.Zero(), getLabel().toMips()));
         return code;
     }
 

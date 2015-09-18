@@ -1,6 +1,6 @@
 Program                ::= Code*;
 abstract Code;
-Bneq:Code              ::= Cond:Reg Label:Label;
+Beq:Code              ::= Value1:Reg Value2:Reg Label:Label;
 Jump:Code              ::= Label:Label;
 StoreWord:Code         ::= Addr:Reg <Offset:Integer> Value:Reg;
 LoadWord:Code          ::= Dest:Reg Addr:Reg <Offset:Integer>;
