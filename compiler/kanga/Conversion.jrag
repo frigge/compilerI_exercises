@@ -1,0 +1,313 @@
+aspect KangaToMipsConversion {
+    syn mips.Program Program.toMips(){
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        kanga.List<LabeledStmt> stmts = getStmtss();
+        for (LabeledStmt stmt : stmts) {
+            code.addAll(stmt.toMips());
+        }
+        return new mips.Program(code);
+    }
+
+    abstract mips.List<mips.Code> Stmt.toMips();
+
+    public mips.List<mips.Code> LabeledStmt.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        if(getLabel() != null) {
+            code.add(getLabel().toMips());
+        }
+
+        addAll(code, getStmt().toMips());
+        return code;
+    }
+
+    public mips.List<mips.Code> Procedure.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        return code;
+    }
+
+    public mips.List<mips.Code> Noop.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        return code;
+    }
+
+    public mips.List<mips.Code> Err.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        return code;
+    }
+
+    public mips.List<mips.Code> CJump.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        code.add(new mips.Beq(getCond().toMips(), new mips.Zero(), getLabel().toMips()));
+        return code;
+    }
+
+    public mips.List<mips.Code> Jump.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        code.add(new mips.Jump(getLabel().toMips()));
+        return code;
+    }
+
+    public mips.List<mips.Code> HStore.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        mips.Reg addr = getAddr().toMips();
+        mips.Reg value = getValue().toMips();
+        int offset = getOffset();
+
+        code.add(new mips.StoreWord(addr, offset, value));
+        return code;
+    }
+
+    public mips.List<mips.Code> HLoad.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        mips.Reg dest = getDest().toMips();
+        mips.Reg addr = getAddr().toMips();
+        int offset = getOffset();
+
+        code.add(new mips.LoadWord(dest, addr, offset));
+        return code;
+    }
+
+    public mips.List<mips.Code> HAlloc.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        SExp sizeExp = getSize();
+        if(sizeExp instanceof RegExp) {
+            code.add(new mips.Add(new mips.GP(),
+                                  ((RegExp)sizeExp).getReg().toMips(),
+                                  new mips.GP()));
+        }
+        else if (sizeExp instanceof IntLiteral) {
+            int size = ((IntLiteral)sizeExp).getInteger();
+            code.add(new mips.AddImmediate(new mips.GP(),
+                                           new mips.GP(),
+                                           size));
+        }
+        code.add(new mips.Add(new mips.V0(),
+                              new mips.Zero(),
+                              new mips.GP()));
+        return code;
+    }
+
+    public mips.List<mips.Code> Move.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        Reg dest = getDest();
+        Exp src = getSource();
+        if(src instanceof RegExp)
+        if(src instanceof LabelExp)
+        if(src instanceof IntLiteral)
+        if(src instanceof Binop)
+
+        code.add(new mips.Add(dest.toMips(), new mips.S7(), new mips.Zero()));
+        return code;
+    }
+
+    public mips.List<mips.Code> Print.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+
+        SExp value = getValue();
+        Reg reg;
+        if(value instanceof RegExp) {
+            reg = ((RegExp)value).getReg();
+            code.add(new mips.Add(new mips.A0(),
+                                  reg.toMips(),
+                                  new mips.Zero()));
+        }
+        else if(value instanceof IntLiteral) {
+            code.add(new mips.LoadImediate(new mips.A0(),
+                                           ((IntLiteral) value).getInteger()));
+        }
+        else if(value instanceof LabelExp) {
+            //TODO: Throw Error
+        }
+
+        code.add(new mips.LoadImediate(new mips.V0(), 1));
+        code.add(new mips.Syscall());
+        return code;
+    }
+
+    public mips.List<mips.Code> ALoad.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        int spill = getValue().getNumber();
+        int offset = spill * 4;
+        code.add(new mips.AddImmediate(new mips.SP(), new mips.SP(), -offset));
+        code.add(new mips.LoadWord(getDest().toMips(), new mips.SP(), 0));
+        return code;
+    }
+
+    public mips.List<mips.Code> AStore.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        int spill = getDest().getNumber();
+        int offset = spill * 4;
+        code.add(new mips.AddImmediate(new mips.SP(), new mips.SP(), -offset));
+        code.add(new mips.StoreWord(new mips.SP(), 0, getValue().toMips()));
+        return code;
+    }
+
+    public mips.List<mips.Code> PassArg.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        return code;
+    }
+
+    public mips.List<mips.Code> Call.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        return code;
+    }
+
+    abstract public mips.List<mips.Code> Exp.toMips();
+
+    public  mips.List<mips.Code> IntLiteral.toMips() {
+        return new mips.List<mips.Code>();
+    }
+
+    public mips.List<mips.Code> RegExp.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        return code;
+    }
+
+    public mips.List<mips.Code> LabelExp.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        code.add(new mips.Label(getLabel().toMips()));
+        return code;
+    }
+
+    public mips.List<mips.Code> Plus.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        SExp right = getRight();
+        code.addAll(right.toMips());
+        code.add(new mips.Add(new mips.S7(),
+                              getLeft().toMips(),
+                              new mips.S7()));
+        return code;
+    }
+
+    public mips.List<mips.Code> Minus.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        SExp right = getRight();
+        code.addAll(right.toMips());
+        code.add(new mips.Sub(new mips.S7(),
+                              getLeft().toMips(),
+                              new mips.S7()));
+        return code;
+    }
+
+    public mips.List<mips.Code> Times.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        SExp right = getRight();
+        code.addAll(right.toMips());
+        code.add(new mips.Mult(new mips.S7(),
+                              getLeft().toMips(),
+                              new mips.S7()));
+        return code;
+    }
+
+    public mips.List<mips.Code> Lt.toMips() {
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        SExp right = getRight();
+        code.addAll(right.toMips());
+        code.add(new mips.SetLessThan(new mips.S7(),
+                                      getLeft().toMips(),
+                                      new mips.S7()));
+        return code;
+    }
+
+    abstract mips.Reg Reg.toMips();
+
+    public mips.Label Label.toMips() {
+        return new mips.Label(getLabel());
+    }
+
+    public mips.Reg A0.toMips() {
+        return new mips.A0();
+    }
+
+    public mips.Reg A1.toMips() {
+        return new mips.A1();
+    }
+
+    public mips.Reg A2.toMips() {
+        return new mips.A2();
+    }
+
+    public mips.Reg A3.toMips() {
+        return new mips.A3();
+    }
+
+    public mips.Reg T0.toMips() {
+        return new mips.T0();
+    }
+
+    public mips.Reg T1.toMips() {
+        return new mips.T1();
+    }
+
+    public mips.Reg T2.toMips() {
+        return new mips.T2();
+    }
+
+    public mips.Reg T3.toMips() {
+        return new mips.T3();
+    }
+
+    public mips.Reg T4.toMips() {
+        return new mips.T4();
+    }
+
+    public mips.Reg T5.toMips() {
+        return new mips.T5();
+    }
+
+    public mips.Reg T6.toMips() {
+        return new mips.T6();
+    }
+
+    public mips.Reg T7.toMips() {
+        return new mips.T7();
+    }
+
+    public mips.Reg T8.toMips() {
+        return new mips.T8();
+    }
+
+    public mips.Reg T9.toMips() {
+        return new mips.T9();
+    }
+
+    public mips.Reg S0.toMips() {
+        return new mips.S0();
+    }
+
+    public mips.Reg S1.toMips() {
+        return new mips.S1();
+    }
+
+    public mips.Reg S2.toMips() {
+        return new mips.S2();
+    }
+
+    public mips.Reg S3.toMips() {
+        return new mips.S3();
+    }
+
+    public mips.Reg S4.toMips() {
+        return new mips.S4();
+    }
+
+    public mips.Reg S5.toMips() {
+        return new mips.S5();
+    }
+
+    public mips.Reg S6.toMips() {
+        return new mips.S6();
+    }
+
+    public mips.Reg S7.toMips() {
+        return new mips.S7();
+    }
+
+    public mips.Reg V0.toMips() {
+        return new mips.V0();
+    }
+
+    public mips.Reg V1.toMips() {
+        return new mips.V1();
+    }
+}
