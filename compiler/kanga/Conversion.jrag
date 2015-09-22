@@ -3,14 +3,15 @@ aspect KangaToMipsConversion {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
 
         //offset stack pointer
-        int offset = getStackSlots();
-        code.add(new mips.AddImmediate(new mips.SP(), offset));
+        int offset = getStackSlots() * -4;
+
+        code.add(new mips.AddImmediate(new mips.SP(), new mips.SP(), offset));
 
         for (LabeledStmt stmt : getStmtss()) {
             code.addAll(stmt.toMips());
         }
 
-        for (Procedure proc : getProceduress()) {
+        for (Procedure proc : getProcss()) {
             code.addAll(proc.toMips());
         }
         return new mips.Program(code);
@@ -21,10 +22,10 @@ aspect KangaToMipsConversion {
     public mips.List<mips.Code> LabeledStmt.toMips() {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         if(getLabel() != null) {
-            code.add(getLabel().toMips());
+            code.add(new mips.LabelCode(getLabel().toMips()));
         }
 
-        addAll(code, getStmt().toMips());
+        code.addAll(getStmt().toMips());
         return code;
     }
 
@@ -34,10 +35,11 @@ aspect KangaToMipsConversion {
         code.add(getLabel().toMips());
 
         //set frame pointer to old stack position
-        code.add(new mips.AddImmediate(new mips.FP(), new mips.Zero(), new mips.SP()));
+        code.add(new mips.Add(new mips.FP(), new mips.Zero(), new mips.SP()));
 
         //offset stack pointer
-        int offset = getStackSlots();
+        //TODO return pointer
+        int offset = getStackSlots() * -4;
         code.add(new mips.AddImmediate(new mips.SP(), new mips.SP(), offset));
 
         for (LabeledStmt stmt : getStmtss()) {
@@ -45,7 +47,9 @@ aspect KangaToMipsConversion {
         }
 
         //reset stack pointer to frame pointer
-        code.add(new mips.AddImmediate(new mips.SP(), new mips.Zero(), new mips.FP()));
+        code.add(new mips.Add(new mips.SP(), new mips.Zero(), new mips.FP()));
+
+        //ruecksprung
 
         return code;
     }
@@ -56,6 +60,7 @@ aspect KangaToMipsConversion {
     }
 
     public mips.List<mips.Code> Err.toMips() {
+        //TODO
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         return code;
     }
@@ -115,13 +120,9 @@ aspect KangaToMipsConversion {
     public mips.List<mips.Code> Move.toMips() {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         Reg dest = getDest();
-        Exp src = getSource();
-        if(src instanceof RegExp)
-        if(src instanceof LabelExp)
-        if(src instanceof IntLiteral)
-        if(src instanceof Binop)
+        code.addAll(getSource().toMips());
 
-        code.add(new mips.Add(dest.toMips(), new mips.S7(), new mips.Zero()));
+        code.add(new mips.Move(dest.toMips(), new mips.V0()));
         return code;
     }
 
@@ -153,7 +154,6 @@ aspect KangaToMipsConversion {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         int spill = getValue().getNumber();
         int offset = spill * 4;
-        code.add(new mips.AddImmediate(new mips.SP(), new mips.SP(), -offset));
         code.add(new mips.LoadWord(getDest().toMips(), new mips.SP(), 0));
         return code;
     }
@@ -162,17 +162,18 @@ aspect KangaToMipsConversion {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         int spill = getDest().getNumber();
         int offset = spill * 4;
-        code.add(new mips.AddImmediate(new mips.SP(), new mips.SP(), -offset));
         code.add(new mips.StoreWord(new mips.SP(), 0, getValue().toMips()));
         return code;
     }
 
     public mips.List<mips.Code> PassArg.toMips() {
+        //TODO: offset 
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         return code;
     }
 
     public mips.List<mips.Code> Call.toMips() {
+        //TODO
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         return code;
     }
@@ -180,16 +181,20 @@ aspect KangaToMipsConversion {
     abstract public mips.List<mips.Code> Exp.toMips();
 
     public  mips.List<mips.Code> IntLiteral.toMips() {
-        return new mips.List<mips.Code>();
+        mips.List<mips.Code> code = new mips.List<mips.Code>();
+        code.add(new mips.LoadImediate(new mips.V0(), getInteger()));
+        return code;
     }
 
     public mips.List<mips.Code> RegExp.toMips() {
+        //TODO return register and get list as param
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         return code;
     }
 
     public mips.List<mips.Code> LabelExp.toMips() {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
+        code.add(new mips.Move(new mips.V0(), new mips.LabelValue(getLabel().toMips())));
         code.add(new mips.Label(getLabel().toMips()));
         return code;
     }
@@ -198,9 +203,9 @@ aspect KangaToMipsConversion {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         SExp right = getRight();
         code.addAll(right.toMips());
-        code.add(new mips.Add(new mips.S7(),
+        code.add(new mips.Add(new mips.V0(),
                               getLeft().toMips(),
-                              new mips.S7()));
+                              new mips.V0()));
         return code;
     }
 
@@ -208,9 +213,9 @@ aspect KangaToMipsConversion {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         SExp right = getRight();
         code.addAll(right.toMips());
-        code.add(new mips.Sub(new mips.S7(),
+        code.add(new mips.Sub(new mips.V0(),
                               getLeft().toMips(),
-                              new mips.S7()));
+                              new mips.V0()));
         return code;
     }
 
@@ -218,9 +223,9 @@ aspect KangaToMipsConversion {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         SExp right = getRight();
         code.addAll(right.toMips());
-        code.add(new mips.Mult(new mips.S7(),
+        code.add(new mips.Mult(new mips.V0(),
                               getLeft().toMips(),
-                              new mips.S7()));
+                              new mips.V0()));
         return code;
     }
 
@@ -228,9 +233,9 @@ aspect KangaToMipsConversion {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         SExp right = getRight();
         code.addAll(right.toMips());
-        code.add(new mips.SetLessThan(new mips.S7(),
+        code.add(new mips.SetLessThan(new mips.V0(),
                                       getLeft().toMips(),
-                                      new mips.S7()));
+                                      new mips.V0()));
         return code;
     }
 
