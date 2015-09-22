@@ -1,9 +1,17 @@
 aspect KangaToMipsConversion {
     syn mips.Program Program.toMips(){
         mips.List<mips.Code> code = new mips.List<mips.Code>();
-        kanga.List<LabeledStmt> stmts = getStmtss();
-        for (LabeledStmt stmt : stmts) {
+
+        //offset stack pointer
+        int offset = getStackSlots();
+        code.add(new mips.AddImmediate(new mips.SP(), offset));
+
+        for (LabeledStmt stmt : getStmtss()) {
             code.addAll(stmt.toMips());
+        }
+
+        for (Procedure proc : getProceduress()) {
+            code.addAll(proc.toMips());
         }
         return new mips.Program(code);
     }
@@ -22,6 +30,23 @@ aspect KangaToMipsConversion {
 
     public mips.List<mips.Code> Procedure.toMips() {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
+
+        code.add(getLabel().toMips());
+
+        //set frame pointer to old stack position
+        code.add(new mips.AddImmediate(new mips.FP(), new mips.Zero(), new mips.SP()));
+
+        //offset stack pointer
+        int offset = getStackSlots();
+        code.add(new mips.AddImmediate(new mips.SP(), new mips.SP(), offset));
+
+        for (LabeledStmt stmt : getStmtss()) {
+            code.addAll(stmt.toMips());
+        }
+
+        //reset stack pointer to frame pointer
+        code.add(new mips.AddImmediate(new mips.SP(), new mips.Zero(), new mips.FP()));
+
         return code;
     }
 
