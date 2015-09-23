@@ -30,7 +30,12 @@ aspect lookup {
 		addError(lookup().enter(this));
 	}
 	public void ClassDecl.buildLookup() {
+		lookup().incNL(this);
 		addError(lookup().enter(this));
+		for(VarDecl v: getVariabless()){
+			addError(lookup().enter(v));
+		}
+		lookup().decNL();
 	}
   	
   	
