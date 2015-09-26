@@ -95,6 +95,7 @@ Exp = Exp.l op.o Exp.r																	{: return new BinOpExp(getLine(l),l,o,r);
         | c_false.first																	{: return new FalseExp(getLine(first)); :}
         | id.i																			{: return new IdExp(getLine(i),i); :}
 		| integer_lit.i																	{: return new IntLit(getLine(i),i.value.toString()); :}
+		| sym_minus integer_lit.i														{: return new IntLit(getLine(i),""+(-1*Integer.parseInt(i.value.toString()))); :}
         | kw_this.first																	{: return new ThisExp(getLine(first)); :}
         | kw_new.first t_int sym_open_square Exp.g sym_close_square						{: return new IntArrExp(getLine(first),g); :}
         | kw_new.first id.k sym_open sym_close											{: return new NewExp(getLine(first),k); :}
