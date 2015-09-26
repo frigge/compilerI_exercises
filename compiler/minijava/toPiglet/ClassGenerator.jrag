@@ -123,6 +123,10 @@ aspect ClassGeneration{
 		public int lookup(ClassDecl c, MethodDecl m){
 			return varPositions.get(c).methodPos.get(m);
 		}
+		
+		public int getObjectSize(ClassDecl c){
+			return varPositions.get(c).varPos.size();
+		}
 
 		public java.util.Set<java.util.Map.Entry<MethodDecl,Integer>> methods(ClassDecl c){
 			return varPositions.get(c).methodPos.entrySet();
