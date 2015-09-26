@@ -5,7 +5,7 @@ import minijava.MJScanner;
 
 import java.io.*;
 
-import carFrigge.minijava.*;
+import minijava.*;
 
 class Main {
 

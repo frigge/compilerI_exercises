@@ -7,7 +7,8 @@ aspect Size{
 		return sum;
 	}
 	public int ClassDecl.getSizeOfDecl(){
-		return ClassDecl.getSizeOfDecl(getVariabless());
+//		return ClassDecl.getSizeOfDecl(getVariabless());
+		return classGen().getObjectSize(this);
 	}
 	
 	public abstract int Type.size();

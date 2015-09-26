@@ -4,6 +4,13 @@ aspect GraphColoring {
 		for(Block b : l.getBlocks()){
 			for(Temp t1: b.getAlive()){
 				for(Temp t2: b.getAlive()){
+//					if(!t1.getTempContext().equals(t2.getTempContext())){
+//						System.out.println(t1.toString() + " ist nicht im selben Kontext wie "+ t2.toString());
+//						TempContext tc = t1.getTempContext();
+//						TempContext lc = t2.getTempContext();
+//						System.out.println((tc instanceof Procedure ? ((Procedure) tc).getLabel() : "MAIN") + " und "+ (lc instanceof Procedure ? ((Procedure) lc).getLabel() : "MAIN"));
+//						System.out.println(b);
+//					}
 					graph.addEdge(t1,t2);
 				}
 			}
