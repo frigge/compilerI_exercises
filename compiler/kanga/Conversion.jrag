@@ -19,6 +19,39 @@ aspect KangaToMipsConversion {
 
     abstract mips.List<mips.Code> Stmt.toMips();
 
+    public class StackInfo {
+        private int mArgsOffset = 0;
+        private int mStackSize = 0;
+        private int mReturnAddressOffset = 0;
+
+        StackInfo() {}
+
+        void setInfo(int args, int stack) {
+            mArgsOffset = (stack - args) * -4;
+            mStackSize = (stack + 1) * -4;
+            mReturnAddressOffset = stack * -4;
+        }
+
+        int getArgsOffset() {
+            return mArgsOffset;
+        }
+
+        int getReturnAddressOffset() {
+            return mReturnAddressOffset;
+        }
+
+        int getStackSize() {
+            return mStackSize;
+        }
+    }
+
+    syn lazy StackInfo Program.stackInfo() { return new StackInfo(); }
+    syn lazy StackInfo Procedure.stackInfo() { return new StackInfo(); }
+    eq Procedure.getStmts().stackInfo() = this.stackInfo();
+    eq Program.getStmts().stackInfo() = this.stackInfo();
+
+    inh lazy StackInfo Stmt.stackInfo();
+
     public mips.List<mips.Code> LabeledStmt.toMips() {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         if(getLabel() != null) {
@@ -28,17 +61,19 @@ aspect KangaToMipsConversion {
         code.addAll(getStmt().toMips());
         return code;
     }
-
     public mips.List<mips.Code> Procedure.toMips() {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
 
-        code.add(getLabel().toMips());
+        int args = getArguments();
+        int stack = getStackSlots();
+        stackInfo().setInfo(args, stack);
+
+        code.add(new mips.LabelCode(getLabel().toMips()));
 
         //set frame pointer to old stack position
         code.add(new mips.Add(new mips.FP(), new mips.Zero(), new mips.SP()));
 
         //offset stack pointer
-        //TODO return pointer
         int offset = getStackSlots() * -4;
         code.add(new mips.AddImmediate(new mips.SP(), new mips.SP(), offset));
 
@@ -50,6 +85,7 @@ aspect KangaToMipsConversion {
         code.add(new mips.Add(new mips.SP(), new mips.Zero(), new mips.FP()));
 
         //ruecksprung
+        code.add(new mips.JumpReg(new mips.RA()));
 
         return code;
     }
@@ -60,8 +96,8 @@ aspect KangaToMipsConversion {
     }
 
     public mips.List<mips.Code> Err.toMips() {
-        //TODO
         mips.List<mips.Code> code = new mips.List<mips.Code>();
+        code.add(new mips.Err());
         return code;
     }
 
@@ -129,22 +165,8 @@ aspect KangaToMipsConversion {
     public mips.List<mips.Code> Print.toMips() {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
 
-        SExp value = getValue();
-        Reg reg;
-        if(value instanceof RegExp) {
-            reg = ((RegExp)value).getReg();
-            code.add(new mips.Add(new mips.A0(),
-                                  reg.toMips(),
-                                  new mips.Zero()));
-        }
-        else if(value instanceof IntLiteral) {
-            code.add(new mips.LoadImediate(new mips.A0(),
-                                           ((IntLiteral) value).getInteger()));
-        }
-        else if(value instanceof LabelExp) {
-            //TODO: Throw Error
-        }
-
+        code.addAll(getValue().toMips());
+        code.add(new mips.Move(new mips.A0(), new mips.V0()));
         code.add(new mips.LoadImediate(new mips.V0(), 1));
         code.add(new mips.Syscall());
         return code;
@@ -167,14 +189,24 @@ aspect KangaToMipsConversion {
     }
 
     public mips.List<mips.Code> PassArg.toMips() {
-        //TODO: offset 
         mips.List<mips.Code> code = new mips.List<mips.Code>();
+        int offset = getNumber() * 4 + 4;
+        code.add(new mips.StoreWord(new mips.SP(), offset, getValue().toMips()));
         return code;
     }
 
     public mips.List<mips.Code> Call.toMips() {
-        //TODO
+        //TODO fix StackInfo lazy inh attr by looking at how Carsten did it
         mips.List<mips.Code> code = new mips.List<mips.Code>();
+        code.addAll(getName().toMips());
+
+        //Load memory address of last jump position
+        int retOffset = stackInfo().getReturnAddressOffset();
+        code.add(new mips.StoreWord(new mips.SP(), retOffset, new mips.RA()));
+        code.add(new mips.JumpLink(new mips.V0()));
+
+        //restore jump address
+        code.add(new mips.LoadWord(new mips.RA(), new mips.SP(), retOffset));
         return code;
     }
 
@@ -187,15 +219,15 @@ aspect KangaToMipsConversion {
     }
 
     public mips.List<mips.Code> RegExp.toMips() {
-        //TODO return register and get list as param
         mips.List<mips.Code> code = new mips.List<mips.Code>();
+        code.add(new mips.Move(new mips.V0(), getReg().toMips()));
         return code;
     }
 
     public mips.List<mips.Code> LabelExp.toMips() {
         mips.List<mips.Code> code = new mips.List<mips.Code>();
         code.add(new mips.Move(new mips.V0(), new mips.LabelValue(getLabel().toMips())));
-        code.add(new mips.Label(getLabel().toMips()));
+        //code.add(new mips.Label(getLabel().toMips()));
         return code;
     }
 
