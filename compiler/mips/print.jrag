@@ -1,6 +1,6 @@
 aspect Printer {
     public String Program.print() {
-        StringBuilder sb = "";
+        StringBuilder sb = new StringBuilder();
         for (Code c : getCodes()) {
             sb.append(c.print());
         }
@@ -8,50 +8,66 @@ aspect Printer {
     }
 
     abstract String Code.print();
+    abstract String Value.print();
 
     String Beq.print() {
-        return "Beq " + getValue1().print() + ", " + getValue2().print() + ", " + getLabel().print() + "\n";
+        return "beq " + getValue1().print() + ", " + getValue2().print() + ", " + getLabel().print() + "\n";
     }
 
     String Jump.print() {
-        return "Jump " + getLabel().print() + "\n";
+        return "j " + getLabel().print() + "\n";
+    }
+
+    String JumpReg.print() {
+        return "jr " + getAddr().print() + "\n";
+    }
+
+    String JumpLink.print() {
+        return "jal " + getAddr().print() + "\n";
+    }
+
+    String Err.print() {
+        return "_error\n";
     }
 
     String StoreWord.print() {
-        return "StoreWord " + getAddr().print() + ", " + String.valueOf(getOffset()) + ", " + getValue().print() + "\n";
+        return "sw " + getAddr().print() + ", " + String.valueOf(getOffset()) + "(" + getValue().print() + ")\n";
     }
 
     String LoadWord.print() {
-        return "LoadWord " + getDest().print() + ", " + getAddr().print() + ", " + String.valueOf(getOffset()) + "\n";
+        return "lw " + getDest().print() + ", " + String.valueOf(getOffset()) + "(" + getAddr().print() + ")\n";
     }
 
     String LoadImediate.print() {
-        return "LoadImediate " + getDest().print() + ", " + String.valueOf(getConstant()) + "\n";
+        return "li " + getDest().print() + ", " + String.valueOf(getConstant()) + "\n";
     }
 
     String Add.print() {
-        return "Add " + getDest().print() + ", " + getLeft().print() + ", " + getRight().print() + "\n";
+        return "add " + getDest().print() + ", " + getLeft().print() + ", " + getRight().print() + "\n";
     }
 
     String AddImmediate.print() {
-        return "AddImmediate";
-        //AddImmediate:Code      ::= Dest:Reg Left:Reg <Constant:Integer>;
+        return "addi " + getDest().print() + ", " + getLeft().print() + ", " + String.valueOf(getConstant()) + "\n";
     }
 
     String Sub.print() {
-        return "Sub " + getDest().print() + ", " + getLeft().print() + ", " + getRight().print() + "\n";
+        return "sub " + getDest().print() + ", " + getLeft().print() + ", " + getRight().print() + "\n";
     }
 
     String Mult.print() {
-        return "Mult " + getDest().print() + ", " + getLeft().print() + ", " + getRight().print() + "\n";
+        return "mul " + getDest().print() + ", " + getLeft().print() + ", " + getRight().print() + "\n";
     }
 
     String SetLessThan.print() {
-        return "SetLessThan " + getDest().print() + ", " + getLeft().print() + ", " + getRight().print() + "\n";
+        return "slt " + getDest().print() + ", " + getLeft().print() + ", " + getRight().print() + "\n";
+    }
+
+    String Move.print() {
+        return "move " + getDest().print() + ", " + getValue().print() + "\n";
     }
 
     String Syscall.print() {
-        return "Syscall\n";
+        return "syscall\n";
     }
 
     abstract String Reg.print();
@@ -176,4 +192,11 @@ aspect Printer {
         return getLabel() + ":\n";
     }
 
+    String LabelCode.print() {
+        return getLabel().print();
+    }
+
+    String LabelValue.print() {
+        return getLabel().print();
+    }
 }
