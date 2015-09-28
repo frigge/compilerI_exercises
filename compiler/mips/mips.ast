@@ -13,7 +13,6 @@ Sub:Code               ::= Dest:Reg Left:Reg Right:Reg;
 Mult:Code              ::= Dest:Reg Left:Reg Right:Reg;
 SetLessThan:Code       ::= Dest:Reg Left:Reg Right:Reg;
 Move:Code              ::= Dest:Reg Value:Value;
-Err:Code;
 
 Syscall:Code;
 

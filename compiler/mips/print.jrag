@@ -26,10 +26,6 @@ aspect Printer {
         return "jal " + getAddr().print() + "\n";
     }
 
-    String Err.print() {
-        return "_error\n";
-    }
-
     String StoreWord.print() {
         return "sw " + getAddr().print() + ", " + String.valueOf(getOffset()) + "(" + getValue().print() + ")\n";
     }

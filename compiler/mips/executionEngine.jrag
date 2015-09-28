@@ -201,6 +201,12 @@ aspect Execution {
 	
 	public boolean JumpReg.execute(){
 		int line = regs().getRegister(getAddr()).read();
+		addrLookup().get(line).execute();
+		return false;
+	}
+	
+	public boolean JumpLink.execute(){
+		int line = regs().getRegister(getAddr()).read();
 		Register raReg = regs().getRegister(new RA());
 		Integer thisLine = codeLookup().get(this);
 		raReg.write(thisLine+4);
