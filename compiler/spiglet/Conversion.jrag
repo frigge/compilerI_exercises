@@ -49,7 +49,8 @@ aspect PigletToSpigletConversion{
 		
 		mainStatements.addAll(getStmtsRet().toKanga());
 		
-	    kanga.Procedure kangaP = new kanga.Procedure(label,getParams(),neededSpills(),maxCallArgs(),mainStatements);
+        int stackSlots = neededSpills() + (maxCallArgs() > 4 ? maxCallArgs() - 4 : 0);
+	    kanga.Procedure kangaP = new kanga.Procedure(label,getParams(),stackSlots ,maxCallArgs(),mainStatements);
 	    return kangaP;
 	}
 	
