@@ -239,6 +239,11 @@ aspect Execution {
 		return true;
 	}
 	
+	public boolean LoadAdress.execute(){
+		regs().getRegister(getDest()).write(getValue().read());
+		return true;
+	}
+	
 	public boolean Add.execute(){
 		int left = regs().getRegister(getLeft()).read();
 		int right = regs().getRegister(getRight()).read();
@@ -290,6 +295,11 @@ aspect Execution {
 		
 		switch(v0){
 			case 1: System.out.println(a0); break;
+			case 4: switch(a0){
+						case -1345677: System.out.println(""); break;
+						case -1345676: System.out.println("ERROR"); break;
+						default: System.out.println("Not yet implemented"); break;
+					} break;
 			case 10: continuation().cont = false; break;
 			case 17: continuation().cont = false; System.out.println("Exit Code is "+a0); break;
 			default: System.out.println("Not yet implemented"); break;
@@ -316,6 +326,14 @@ aspect Execution {
 	
 	public int LabelValue.read(){
 		return labelLookup().get(getLabel());
+	}
+	
+	public int NewLine.read(){
+		return -1345677;
+	}
+	
+	public int ErrorLine.read(){
+		return -1345676;
 	}
 		
 	public int Reg.hashCode() {
