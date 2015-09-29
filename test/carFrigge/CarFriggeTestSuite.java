@@ -7,6 +7,7 @@ import org.junit.runners.Suite.SuiteClasses;
 import carFrigge.kanga.KangaTest;
 import carFrigge.minijava.NameTest;
 import carFrigge.minijava.TypeTest;
+import carFrigge.mips.MipsTest;
 import carFrigge.piglet.PigletTest;
 import carFrigge.spiglet.SPigletTest;
 
@@ -16,7 +17,8 @@ import carFrigge.spiglet.SPigletTest;
 	TypeTest.class,
 	PigletTest.class,
 	SPigletTest.class,
-	KangaTest.class
+	KangaTest.class,
+	MipsTest.class
 })
 public class CarFriggeTestSuite {
 }

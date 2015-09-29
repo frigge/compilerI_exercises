@@ -294,14 +294,14 @@ aspect Execution {
 		int a0 = regs().getRegister(new A0()).read();
 		
 		switch(v0){
-			case 1: System.out.println(a0); break;
+			case 1: System.out.print(a0); break;
 			case 4: switch(a0){
 						case -1345677: System.out.println(""); break;
-						case -1345676: System.out.println("ERROR"); break;
-						default: System.out.println("Not yet implemented"); break;
+						case -1345676: System.out.print("ERROR"); break;
+						default: System.out.print("Not yet implemented"); break;
 					} break;
 			case 10: continuation().cont = false; break;
-			case 17: continuation().cont = false; System.out.println("Exit Code is "+a0); break;
+			case 17: continuation().cont = false; break;
 			default: System.out.println("Not yet implemented"); break;
 		}
 		return true;

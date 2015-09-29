@@ -9,6 +9,7 @@ import org.junit.runners.Suite.SuiteClasses;
 	Piglet.class,
 	SPiglet.class,
 	Kanga.class,
+	Mips.class,
 	Minijava.class
 })
 public class HaukeTestSuite {
