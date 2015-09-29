@@ -35,6 +35,14 @@ aspect lookupTable{
 		public ClassDecl lookupClass(Id i){
 			return lookupClass(i.getIdent());
 		}
+		public VarDecl lookupVar(Type t, Id i){
+			VarDecl result = null;
+			while(t != null && result == null){
+				result = (VarDecl) lookupTable.get(new VarLookupIdentification(lookupClass(t), i.getIdent()));
+				t = t.supertype();
+			}
+			return result;
+		}
 		
 		public Decl lookupMethod(ClassDecl nesting, String name, List<Type> params){
 			try{
@@ -77,6 +85,8 @@ aspect lookupTable{
 				return new ClassLookupIdentification(decl);
 			} else if(decl instanceof MethodDecl){
 				return new MethodLookupIdentification(prefix,(MethodDecl) decl);
+			} else if(decl instanceof VarDecl){
+				return new VarLookupIdentification(prefix,(VarDecl) decl);
 			} else {
 				return null;
 			}
@@ -166,6 +176,57 @@ aspect lookupTable{
 			if (getClass() != obj.getClass())
 				return false;
 			MethodLookupIdentification other = (MethodLookupIdentification) obj;
+			if (name == null) {
+				if (other.name != null)
+					return false;
+			} else if (!name.equals(other.name))
+				return false;
+			if (nesting == null) {
+				if (other.nesting != null)
+					return false;
+			} else if (!nesting.equals(other.nesting))
+				return false;
+			return true;
+		}
+	}
+	
+	public class VarLookupIdentification extends LookupIdentification{
+		String name;
+		ClassDecl nesting;
+		
+		public VarLookupIdentification(ClassDecl nesting, VarDecl decl){
+			this.nesting = nesting;
+			this.name = decl.getIdent().getIdent();
+		}
+		
+		public VarLookupIdentification(ClassDecl nesting, String name){
+			this.name = name;
+			this.nesting = nesting;
+		}
+
+
+		@Override
+		public String getName(){
+			return name;
+		}
+		
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((name == null) ? 0 : name.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			VarLookupIdentification other = (VarLookupIdentification) obj;
 			if (name == null) {
 				if (other.name != null)
 					return false;

@@ -3,11 +3,33 @@ aspect PigletToSpigletConversion{
 	syn int Program.numOfReg(){
 		return 10;
 	}
+	
+	public boolean Code.isLastStatementInBlock(LabeledStmt stmt){
+		if(stmt == null){
+			return false;
+		}
+		Stmt s = stmt.getStmt();
+		if(stmt.getLabel() != null){
+			return true;
+		} else if(s instanceof Jump){
+			return true;
+		} else if(s instanceof CJump){
+			return true;
+		} else {
+			return false;
+		}
+	}
 
 	syn kanga.Program Program.toKanga(){
 		kanga.List<kanga.LabeledStmt> mainStatements = new kanga.List<kanga.LabeledStmt>();
-		for(LabeledStmt s : getStmtss()){
-			mainStatements.addAll(s.toKanga());
+		List<LabeledStmt> stmts = getStmtss();
+		for(int i = 0; i < stmts.numChildren(); i++){
+			LabeledStmt thisStmt = stmts.getChild(i);
+			LabeledStmt nextStmt = i+1 < stmts.numChildren() ? stmts.getChild(i+1) : null;
+			mainStatements.addAll(thisStmt.toKanga());
+			if(isLastStatementInBlock(nextStmt)){
+				mainStatements.addAll(spillAll());
+			}
 		}
 	    kanga.List<kanga.Procedure> procedures = new kanga.List<kanga.Procedure>();
 	    for(Procedure p : getProcss()){
@@ -30,6 +52,7 @@ aspect PigletToSpigletConversion{
 	}
 	
 	public kanga.Procedure Procedure.toKanga(){
+		registerInfo().resetLoaded();
 		kanga.Label label = getLabel().toKanga();
 		kanga.List<kanga.LabeledStmt> mainStatements = new kanga.List<kanga.LabeledStmt>();
 		
@@ -56,8 +79,14 @@ aspect PigletToSpigletConversion{
 	
 	public kanga.List<kanga.LabeledStmt> StmtExp.toKanga(){
 		kanga.List<kanga.LabeledStmt> mainStatements = new kanga.List<kanga.LabeledStmt>();
-		for(LabeledStmt l : getStmtss()){
-			mainStatements.addAll(l.toKanga());
+		List<LabeledStmt> stmts = getStmtss();
+		for(int i = 0; i < stmts.numChildren(); i++){
+			LabeledStmt thisStmt = stmts.getChild(i);
+			LabeledStmt nextStmt = i+1 < stmts.numChildren() ? stmts.getChild(i+1) : null;
+			mainStatements.addAll(thisStmt.toKanga());
+			if(isLastStatementInBlock(nextStmt)){
+				mainStatements.addAll(spillAll());
+			}
 		}
 		add(mainStatements, new kanga.Move(new kanga.V0(), getRetExp().toKanga(mainStatements)));
 		return mainStatements;
@@ -258,6 +287,28 @@ aspect PigletToSpigletConversion{
 		}
 		return kanga.RegMapper.tReg(regNum);
 	}
+	
+	syn kanga.List<kanga.LabeledStmt> Program.spillAll(){
+		kanga.List<kanga.LabeledStmt> mainStatements = new kanga.List<kanga.LabeledStmt>();
+		java.util.List<Temp> needToSpill = new java.util.ArrayList<Temp>(registerInfo().getLoaded());
+		for(Temp t: needToSpill){
+			int regNum = registerInfo().getRegister(t);
+			int spillNum = registerInfo().spill(t);
+			kanga.Stmt spill = new kanga.AStore(new kanga.SpilledArg(spillNum), kanga.RegMapper.tReg(regNum));
+			add(mainStatements,spill);
+		}
+		return mainStatements;		
+	}
+	 eq Program.getStmts().spillAll() = this.spillAll();
+	 eq Program.getProcs().spillAll() = this.spillAll();
+	  
+	  inh kanga.List<kanga.LabeledStmt> Procedure.spillAll();
+	  inh kanga.List<kanga.LabeledStmt> LabeledStmt.spillAll();
+	  inh kanga.List<kanga.LabeledStmt> Stmt.spillAll();
+	  inh kanga.List<kanga.LabeledStmt> StmtExp.spillAll();
+	  inh kanga.List<kanga.LabeledStmt> Exp.spillAll();
+	  inh kanga.List<kanga.LabeledStmt> Label.spillAll();
+	  inh kanga.List<kanga.LabeledStmt> Temp.spillAll();
 	
 	public kanga.Label Label.toKanga(){
 		return new kanga.Label(getLabel());

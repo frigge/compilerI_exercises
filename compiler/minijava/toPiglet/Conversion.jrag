@@ -1,6 +1,6 @@
 aspect MiniJavaToPigletConversion{	
 	syn int Code.classLookupReg() = 1;
-	syn boolean Code.debug() = true;
+	syn boolean Code.debug() = false;
 
 	syn piglet.Program Program.toPiglet() {
 		piglet.List<piglet.LabeledStmt> mainStatements = new piglet.List<piglet.LabeledStmt>();
@@ -225,7 +225,7 @@ aspect MiniJavaToPigletConversion{
   	}
   	
   	protected piglet.Stmt Statement.store(Id ident, piglet.Exp value){
-  		VarDecl decl = localLookup().lookup(ident);
+  		VarDecl decl = ident.lookupVarDecl();
 		if(decl.isStack()){
   			int speicherPos = memLookup().lookup(decl);
 			return new piglet.Move(new piglet.Temp(speicherPos), value);
@@ -256,7 +256,7 @@ aspect MiniJavaToPigletConversion{
 		add(result,new piglet.CJump(posKleinerNull, new piglet.Label(noErrorLabel)));
 		add(result,new piglet.Err());
   		result.add(new piglet.LabeledStmt(new piglet.Opt<piglet.Label>(new piglet.Label(noErrorLabel)), new piglet.Noop()));
-		VarDecl v = localLookup().lookup(getIdent());
+		VarDecl v = getIdent().lookupVarDecl();
 		if(v.isStack()){
 			add(result, new piglet.Move(new piglet.Temp(adresse),new piglet.TempExp(new piglet.Temp(memLookup().lookup(v)))));
 		} else {
@@ -385,7 +385,7 @@ aspect MiniJavaToPigletConversion{
 		return new piglet.IntLiteral(0);
 	}
 	public piglet.Exp IdExp.toPiglet(){
-		VarDecl v = localLookup().lookup(getName());
+		VarDecl v = getName().lookupVarDecl();
 		if(v.isStack()){
 			int speicherPos = memLookup().lookup(v);
 			return new piglet.TempExp(new piglet.Temp(speicherPos));

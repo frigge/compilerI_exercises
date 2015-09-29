@@ -81,7 +81,7 @@ aspect PrettyPrint {
     printer().append("[").append(""+getStackSlots()).append("]");
     printer().append("[").append(""+getMaxCallArgs()).append("]");
     for (LabeledStmt s : getStmtss()) s.print();
-  	printer().append("\n");
+  	printer().append("\nEND \n");
   }
   
   public abstract void Stmt.print();
@@ -189,10 +189,10 @@ aspect PrettyPrint {
   	printer().append(getLabel());
   }
   public void SpilledArg.print() {
-  	printer().append(""+getNumber());
+  	printer().append("SPILLEDARG "+getNumber());
   }
   public void Reg.print() {
-  	printer().append(getClass().getSimpleName());
+  	printer().append(getClass().getSimpleName().toLowerCase());
   }
   
     public String Program.toString() {StringBuilder b = new StringBuilder();
@@ -350,6 +350,6 @@ aspect PrettyPrint {
   	return ""+getNumber();
   }
   public String Reg.toString() {
-  	return getClass().getSimpleName();
+  	return getClass().getSimpleName().toLowerCase();
   }
 }
