@@ -2,6 +2,7 @@ package de.tu.testing;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -17,6 +18,7 @@ import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,16 +37,7 @@ public class TestHelper {
 	}
 	
 	public static minijava.Program buildProgram(String codeToBeAppended) throws IOException, Exception {
-		PipedInputStream is = new PipedInputStream();
-		PipedOutputStream os = new PipedOutputStream(is);
-
-		BufferedWriter w = new BufferedWriter(new OutputStreamWriter(os));
-		if (codeToBeAppended != null) {
-			w.append(codeToBeAppended);
-		}
-		w.flush();
-		w.close();
-		Program p = buildProgram(is);
+		Program p = buildProgram(new ByteArrayInputStream(codeToBeAppended.getBytes(StandardCharsets.UTF_8)));
 		return p;
 	}
 

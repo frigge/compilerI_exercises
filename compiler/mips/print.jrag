@@ -1,14 +1,36 @@
 aspect Printer {
     public String Program.print() {
         StringBuilder sb = new StringBuilder();
+        sb.append(getPredefinedMethods());
+        sb.append(".text\nmain:\n");
         for (Code c : getCodes()) {
-            sb.append(c.print());
+            sb.append(c.printPref());
         }
         return sb.toString();
     }
+    
+    private String Program.getPredefinedMethods() {
+		String halloc = "\n         .text\n" + "         .globl _halloc\n"
+				+ "_halloc:\n" + "         li $v0, 9\n" + "         syscall\n"
+				+ "         j $ra\n";
+		String print = "\n         .text\n" + "         .globl _print\n"
+				+ "_print:\n" + "         li $v0, 1\n" + "         syscall\n"
+				+ "         la $a0, newl\n" + "         li $v0, 4\n"
+				+ "         syscall\n" + "         j $ra\n";
+		String newl = "\n         .data\n" + "         .align   0\n"
+				+ "newl:    .asciiz \"\\n\"\n";
+		String str_er = "\n         .data\n" + "         .align   0\n"
+				+ "str_er:  .asciiz \"ERROR\"\n";
+
+		return halloc + print + newl + str_er;
+	}
 
     abstract String Code.print();
     abstract String Value.print();
+    
+    String Code.printPref(){
+    	return "     "+print();
+    }
 
     String Beq.print() {
         return "beq " + getValue1().print() + ", " + getValue2().print() + ", " + getLabel().print() + "\n";
@@ -26,12 +48,8 @@ aspect Printer {
         return "jal " + getAddr().print() + "\n";
     }
 
-    String Err.print() {
-        return "_error\n";
-    }
-
     String StoreWord.print() {
-        return "sw " + getAddr().print() + ", " + String.valueOf(getOffset()) + "(" + getValue().print() + ")\n";
+        return "sw " + getValue().print() + ", " + String.valueOf(getOffset()) + "(" + getAddr().print() + ")\n";
     }
 
     String LoadWord.print() {
@@ -41,13 +59,17 @@ aspect Printer {
     String LoadImediate.print() {
         return "li " + getDest().print() + ", " + String.valueOf(getConstant()) + "\n";
     }
+    
+    String LoadAdress.print() {
+    	return "la " + getDest().print() + ", " + getValue().print()+"\n";
+    }
 
     String Add.print() {
         return "add " + getDest().print() + ", " + getLeft().print() + ", " + getRight().print() + "\n";
     }
 
     String AddImmediate.print() {
-        return "addi " + getDest().print() + ", " + getLeft().print() + ", " + String.valueOf(getConstant()) + "\n";
+        return "add " + getDest().print() + ", " + getLeft().print() + ", " + String.valueOf(getConstant()) + "\n";
     }
 
     String Sub.print() {
@@ -161,15 +183,15 @@ aspect Printer {
     }
 
     String GP.print() {
-        return "$gP";
+        return "$gp";
     }
 
     String SP.print() {
-        return "$sP";
+        return "$sp";
     }
 
     String FP.print() {
-        return "$fP";
+        return "$fp";
     }
 
     String V0.print() {
@@ -181,7 +203,7 @@ aspect Printer {
     }
 
     String RA.print() {
-        return "$rA";
+        return "$ra";
     }
 
     String Zero.print() {
@@ -189,14 +211,25 @@ aspect Printer {
     }
 
     String Label.print() {
-        return getLabel() + ":\n";
+        return getLabel();
     }
 
     String LabelCode.print() {
-        return getLabel().print();
+        return getLabel().print()+":\n";
+    }
+    String LabelCode.printPref(){
+    	return print();
     }
 
     String LabelValue.print() {
         return getLabel().print();
+    }
+    
+    String ErrorLine.print() {
+    	return "str_er";
+    }
+    
+    String NewLine.print() {
+    	return "newl";
     }
 }

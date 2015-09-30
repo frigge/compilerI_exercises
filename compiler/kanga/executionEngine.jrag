@@ -24,20 +24,40 @@ aspect Execution {
   inh lazy Heap Exp.heap();
   inh lazy Heap SpilledArg.heap();
 
-  syn lazy Stack Program.stack() {
-  	return new Stack();
+  syn lazy java.util.List<Stack> Program.stackFrame(){
+  	return new java.util.ArrayList<Stack>();
   }
-  syn lazy Stack Procedure.stack() {
-  	return new Stack();
+  eq Program.getProcs().stackFrame() = this.stackFrame();
+  inh lazy java.util.List<Stack> Procedure.stackFrame();
+  
+  syn Stack Program.addStack(){
+  	Stack s = new Stack();
+  	stackFrame().add(s);
+  	return s;
+  }
+  eq Program.getProcs().addStack() = this.addStack();
+  inh Stack Procedure.addStack();
+  
+  syn Stack Program.removeStack(){
+  	Stack s = stackFrame().remove(stackFrame().size()-1);
+  	return s;
+  }
+  eq Program.getProcs().removeStack() = this.removeStack();
+  inh Stack Procedure.removeStack();
+  
+  syn Stack Program.stack() {
+  	return stackFrame().get(stackFrame().size()-1);
   }
   eq Program.getStmts().stack() = this.stack();
+  eq Program.getProcs().stack() = this.stack();
   eq Procedure.getLabel().stack() = this.stack();
   eq Procedure.getStmts().stack() = this.stack();
   
-  inh lazy Stack LabeledStmt.stack();
-  inh lazy Stack Stmt.stack();
-  inh lazy Stack Exp.stack();
-  inh lazy Stack SpilledArg.stack();
+  inh Stack Procedure.stack();
+  inh Stack LabeledStmt.stack();
+  inh Stack Stmt.stack();
+  inh Stack Exp.stack();
+  inh Stack SpilledArg.stack();
 
   syn lazy java.util.Map<Label,KangaCode> Program.labelLookup() = new java.util.HashMap<Label,KangaCode>();
   eq Program.getStmts().labelLookup() = this.labelLookup();
@@ -61,6 +81,18 @@ aspect Execution {
   
   syn lazy FirstCode Program.firstCode() = new FirstCode();
   syn lazy FirstCode Procedure.firstCode() = new FirstCode();
+  
+  syn lazy Continuation Program.continuation() {
+  	return new Continuation();
+  }
+  eq Program.getStmts().continuation() = this.continuation();
+  eq Program.getProcs().continuation() = this.continuation();
+  
+  inh lazy Continuation LabeledStmt.continuation();
+  inh lazy Continuation Procedure.continuation();
+  inh lazy Continuation Stmt.continuation();
+  inh lazy Continuation Exp.continuation();
+  inh lazy Continuation SpilledArg.continuation();
   
 	class RegEngine{
 		private java.util.Map<Reg, Register> regs = new java.util.HashMap<Reg, Register>();
@@ -153,7 +185,7 @@ aspect Execution {
 		private HeapByte get(int pos){
 			HeapByte b = heap.get(pos);
 			if(b == null){
-				throw new IllegalArgumentException("Not yet allocated");
+				throw new IllegalArgumentException("Not yet allocated: "+pos+", next is "+next);
 			}
 			return b;
 		}
@@ -191,7 +223,7 @@ aspect Execution {
 		
 		public void execute(){
 			KangaCode c = this;
-			while(c != null) {
+			while(c != null && c.statement.continuation().cont) {
 				if(c.statement.execute()){
 					c = c.next;
 				} else {
@@ -203,6 +235,9 @@ aspect Execution {
 	
 	class FirstCode {
 		public KangaCode first = null;
+	}
+	class Continuation{
+		public boolean cont = true;
 	}
 	
 	syn lazy int Program.prepareExecution(){
@@ -220,7 +255,6 @@ aspect Execution {
 			}
 			last = thisOne;
 		}
-		stack().prepare(getStackSlots(), getMaxCallArgs());
 		return 0;
 	}
 	
@@ -241,29 +275,33 @@ aspect Execution {
 			last = thisOne;
 		}
 		procedureLookup().put(getLabel().getLabel().hashCode(),this);
-		stack().prepare(getStackSlots(), getMaxCallArgs());
 		return 0;
 	}	
 	
 	public void Program.execute(){
+		continuation().cont = true;
 		prepareExecution();
 		for(Procedure p : getProcss()){
 			p.prepareExecution();
 		}
-		stack().reset();
+		stackFrame().clear();
 		regs().reset();
 		heap().reset();
+		addStack();
+		stack().prepare(getStackSlots(), getMaxCallArgs());
 		
 		firstCode().first.execute();
 	}
 	
 	public void Procedure.call(int[] params){
-		stack().reset();
+		addStack();
+		stack().prepare(getStackSlots(), getMaxCallArgs());
 		for(int i = 4; i < getArguments(); i++){
 			int pos = i-4;
 			stack().write(pos, params[pos]);
 		}
 		firstCode().first.execute();
+		removeStack();
 	}
 	
 	public abstract boolean Stmt.execute();
@@ -272,7 +310,7 @@ aspect Execution {
 	}
 	public boolean Err.execute(){
 		System.out.println("ERROR");
-		System.exit(0);
+		continuation().cont = false;
 		return false;
 	}
 	public boolean CJump.execute(){

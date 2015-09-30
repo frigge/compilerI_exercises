@@ -7,13 +7,13 @@ JumpLink:Code          ::= Addr:Reg;
 StoreWord:Code         ::= Addr:Reg <Offset:Integer> Value:Reg;
 LoadWord:Code          ::= Dest:Reg Addr:Reg <Offset:Integer>;
 LoadImediate:Code      ::= Dest:Reg <Constant:Integer>;
+LoadAdress:Code        ::= Dest:Reg Value:Value;
 Add:Code               ::= Dest:Reg Left:Reg Right:Reg;
 AddImmediate:Code      ::= Dest:Reg Left:Reg <Constant:Integer>;
 Sub:Code               ::= Dest:Reg Left:Reg Right:Reg;
 Mult:Code              ::= Dest:Reg Left:Reg Right:Reg;
 SetLessThan:Code       ::= Dest:Reg Left:Reg Right:Reg;
 Move:Code              ::= Dest:Reg Value:Value;
-Err:Code;
 
 Syscall:Code;
 
@@ -29,6 +29,9 @@ RA:Reg;
 Zero:Reg;
 
 LabelValue:Value               ::= Label;
+NewLine:Value;
+ErrorLine:Value;
 LabelCode:Code                 ::= Label;
 
 Label                   ::= <Label>;
+

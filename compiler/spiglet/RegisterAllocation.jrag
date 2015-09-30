@@ -49,6 +49,7 @@ aspect RegisterAllocation {
 	
 	class TempToRegister{
 		private java.util.Map<Temp,TempInfo> infos = new java.util.HashMap<Temp,TempInfo>();
+		private java.util.Set<Temp> loadedTemps = new java.util.HashSet<Temp>();
 		
 		public TempToRegister(java.util.Map<Temp, ColorInformation<Temp>> info){
 			for(java.util.Map.Entry<Temp, ColorInformation<Temp>> entry : info.entrySet()){
@@ -60,8 +61,17 @@ aspect RegisterAllocation {
 			} 
 		}
 		
+		public java.util.Set<Temp> getLoaded(){
+			return loadedTemps;
+		}
+		
+		public void resetLoaded(){
+			loadedTemps.clear();
+		}
+		
 		public int spill(Temp t){
 			TempInfo i = infos.get(t);
+			loadedTemps.remove(t);
 			i.spill();
 			t.spillTracker().spill(t);
 			return i.getSpillingField();
@@ -83,6 +93,7 @@ aspect RegisterAllocation {
 		public Temp load(Temp t){
 			TempInfo i = infos.get(t);
 			i.load();
+			loadedTemps.add(t);
 			t.spillTracker().load(t);
 			for(Temp loaded: i.getSpillingInfo()){
 				TempInfo loadedInfo = infos.get(loaded);
