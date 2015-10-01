@@ -131,4 +131,25 @@ public class MipsTest {
 		assertEquals(1, result.size());
 		assertEquals("-10", result.get(0));
 	}
+	@Test
+	public void testArrayNeg() throws java.lang.Exception {
+		File f = new File("tests/carFrigge/ArrayNegTest.java");
+		List<String> result = MipsHelper.getOutput(f);
+		assertEquals(1, result.size());
+		assertEquals("ERROR", result.get(0));
+	}
+	@Test
+	public void testArrayTooSmall() throws java.lang.Exception {
+		File f = new File("tests/carFrigge/ArrayTooSmallTest.java");
+		List<String> result = MipsHelper.getOutput(f);
+		assertEquals(1, result.size());
+		assertEquals("ERROR", result.get(0));
+	}
+	@Test
+	public void testArraySize() throws java.lang.Exception {
+		File f = new File("tests/carFrigge/ArraySizeTest.java");
+		List<String> result = MipsHelper.getOutput(f);
+		assertEquals(1, result.size());
+		assertEquals("14", result.get(0));
+	}
 }
