@@ -1,12 +1,48 @@
 \begin{frame}
-    \section*{Graph Coloring}
-    \frametitle{Graph Coloring}
+  \section*{Register Allocation}
+  \frametitle{Register Allocation}
+  \begin{itemize}
+    \item distribute temporary variables to limited amount of registers
+    \item use as little registers as possible
+    \item do not override needed values in registers
+    \item $\rightarrow$ Graph Coloring
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \section*{Graph Coloring}
+  \frametitle{Graph Coloring}
+  \begin{itemize}
+    \item Nodes are the Temporary Variables
+    \item Edges connect nodes that are live at the same time
+    \item Colors represent spill number
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{figure}
+  \includegraphics[scale=1]{graph_coloring.png}
+  \caption{\small Graph visualizing used temporaries and their relations}
+  \end{figure}
+\end{frame}
+
+\begin{frame}
+    \section*{Algorithm}
+    \frametitle{Algorithm}
     \begin{itemize}
-        \item Iterate over Temps and distribute to Colors
-        \item Colors represent the used registers
-        \item Nodes are the Temp Variables
-        \item Edges connect nodes that are live at the same time
+       \item get liveness data from LA
+       \item Iterate over blocks
+         \begin{itemize}
+           \item iterate over living temporaries
+           \item colorize edge
+         \end{itemize}
     \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \section*{Implementation}
+    \frametitle{Implementation}
+    %UML Diagram / Code Referenz
 \end{frame}
 
 \begin{frame}
