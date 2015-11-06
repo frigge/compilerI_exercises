@@ -1,0 +1,157 @@
+\definecolor{myGreen}{RGB}{0,176,80}
+\begin{frame}[fragile]
+    \frametitle{From SPiglet to Kanga - the preparation}
+	
+    \begin{columns} 
+      \column[c]{.60\textwidth} 
+        \begin{itemize} 
+          \item SPiglet uses an infinite number of temps
+          \item Kanga uses 24 Registers
+	\item It offers a stack for spilling
+          \onslide<2->{\item We need a mapping}
+          \onslide<2->\item And we will need \textcolor{myGreen}{green} and \textcolor{red}{red}
+        \end{itemize} 
+      \column[c]{.40\textwidth} 
+\begin{lstlisting}[language=Java]
+A0:Reg; A1:Reg;...
+T0:Reg; T1:Reg;...
+S0:Reg; S1:Reg;...
+V0:Reg; V1:Reg;
+\end{lstlisting}
+    \end{columns} 
+\end{frame}
+
+\begin{frame}
+    \frametitle{Liveness Analysis}
+	\begin{columns} 
+      \column[c]{.30\textwidth} 
+        \includegraphics[scale=0.2]{carfrigge/liveness.png} 
+      \column[c]{.70\textwidth} 
+        \begin{itemize} 
+          \onslide<2->\item Starting point for liveness analysis 
+          \onslide<2->\item Contains all the code 
+          \onslide<3-> \item Problem: How to get there?
+        \end{itemize} 
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Temps}
+        \begin{itemize} 
+         \item All statements are in one analysis
+        \onslide<2-> \item \(Temp3 = Temp3 \)
+         \onslide<2-> \item But: \(Temp3 \ne Temp3 \)
+	\onslide<3-> \item Temps are equals if ...
+	\begin{itemize}
+		\onslide<3-> \item ... they have the same number
+		\onslide<3-> \item ... they are located in the same procedure
+	\end{itemize}
+        \end{itemize} 
+\end{frame}
+
+\begin{frame}
+    \frametitle{Creating Blocks I / III}
+    \begin{columns} 
+      \column[c]{.30\textwidth} 
+        \includegraphics[width=4cm]{carfrigge/basicBlock.png} 
+      \column[c]{.70\textwidth} 
+        \begin{itemize} 
+          \item A basic block is the basic unit 
+          \item It consists of statements
+          \item It can have pre- and successors
+        \end{itemize} 
+    \end{columns}
+\end{frame}
+\begin{frame}
+    \frametitle{Creating Blocks II / III}
+    \begin{columns}
+      \column[c]{.40\textwidth} 
+        \includegraphics[width=3.5cm]{carfrigge/basicBlocks.png} 
+      \column[c]{.60\textwidth} 
+        \begin{itemize} 
+          \onslide<1-> \item Block starts...
+          \begin{itemize}
+          		\onslide<1-> \item ... at the beginning of a procedure
+          		\onslide<1-> \item ... with a label
+          		\onslide<1-> \item ... after a block
+          \end{itemize}
+          \onslide<2-> \item Block ends...
+          \begin{itemize}
+          		\onslide<2-> \item ... if a new one begins
+          		\onslide<2-> \item ... on jumps
+          \end{itemize}
+        \end{itemize} 
+    \end{columns}
+\end{frame}
+\begin{frame}
+    \frametitle{Creating Blocks III / III}
+        \begin{itemize} 
+          \item Every procedure has separated blocks.
+          \item Link blocks together when creating them.
+          \begin{itemize}
+          		\item Keep a table of blocks by label.
+          \end{itemize}
+          	\item You might need the blocks later on for translation.
+        \end{itemize} 
+\end{frame}
+
+\begin{frame}
+    \frametitle{Liveness algorithm}
+	\begin{figure}
+		
+	$$\textit{out} = gen \cup (in \setminus \textit{kill})$$
+	\end{figure}
+    \begin{columns}
+      \column[c]{.60\textwidth} 
+        \begin{itemize} 
+	\item Sets of Temps
+	\item Repeat this formula
+	\item Missing information
+	\begin{itemize}
+		\item gen (reading temps)
+		\item kill (writing temps)
+	\end{itemize}
+	\end{itemize}
+      \column[c]{.40\textwidth} 
+        \includegraphics[width=4cm]{carfrigge/basicBlockGenKill.png} 
+    \end{columns} 
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Gen and Kill}
+\lstdefinestyle{genAndKillStuff}{
+  emptylines=1,
+  breaklines=true,
+  basicstyle=\scriptsize\ttfamily,
+  moredelim=**[is][\color{red}]{@}{@},
+  moredelim=**[is][\color{myGreen}]{+}{+},
+  moredelim=**[is][\color{gray}]{-}{-},
+}
+
+
+\begin{lstlisting}[style=genAndKillStuff]
+Noop:Stmt;
+Move:Stmt    ::= @Dest:Temp@ +Source:Exp+;
+HStore:Stmt  ::= +Addr:Temp+ -<Offset:Integer>- +Value:Temp+;
+HLoad:Stmt   ::= @Dest:Temp@ +Addr:Temp+ -<Offset:Integer>-;
+Print:Stmt   ::= -Value:SExp-;
+TempExp:SExp ::= +Temp:Temp+;
+\end{lstlisting}
+
+\begin{itemize}
+	\onslide<2-> \item Building these sets is easy
+	\onslide<2-> \item Only add to gen if element is not in kill
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{Liveness Analysis - the result}
+	\begin{itemize}
+		\item IT'S ALIVE(!!!)
+		\onslide<2->\item ...ness analysis on SPiglet Code
+		\onslide<3->\item It does not say anything about registers...
+		\onslide<4->\item ... but about living temps
+		\onslide<4-> \item So the next step will be: Graph coloring!
+	\end{itemize}
+\end{frame}

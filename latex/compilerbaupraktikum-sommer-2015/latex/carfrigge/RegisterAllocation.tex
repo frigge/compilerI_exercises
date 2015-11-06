@@ -1,0 +1,60 @@
+\begin{frame}
+  \frametitle{Register Allocation}
+  \begin{itemize}
+    \item Distribute temporary variables to limited amount of registers
+    \item Use as little stack as possible
+    \item Do not override needed values in registers
+    \item $\rightarrow$ Graph Coloring
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Graph Coloring}
+  \begin{itemize}
+    \item Nodes are the Temporary Variables
+    \item Edges connect nodes that are live at the same time
+    \item Colors Registers
+  \end{itemize}
+  \begin{figure}
+  \includegraphics[height=4cm]{carfrigge/graph_coloring.png}
+  \end{figure}
+\end{frame}
+
+\begin{frame}
+  \begin{figure}
+  \includegraphics[height=6cm]{carfrigge/graph_coloring_colored.png}
+  \caption{\small Graph visualizing used temporaries and their relations}
+  \end{figure}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Algorithm}
+    \begin{itemize}
+       \item Get liveness data from Liveness Analysis
+       \item Iterate over blocks
+         \begin{itemize}
+           \item Iterate over living temporaries
+           \item Colorize Nodes
+            \begin{itemize}
+                \item If color already used $\rightarrow$ add spill info
+            \end{itemize}
+         \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Spilling}
+    \begin{itemize}
+        \item ALoad / AStore
+        \item Store values on the stack in order to free registers
+        \item Spill Information as a Result of Graph Coloring
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Implementation}
+  \begin{figure}
+  \includegraphics[height=6cm]{carfrigge/reg_alloc_uml.png}
+  \caption{\small (Pseudo) UML-Diagram showing Graph Coloring Implementation Info}
+  \end{figure}
+\end{frame}
